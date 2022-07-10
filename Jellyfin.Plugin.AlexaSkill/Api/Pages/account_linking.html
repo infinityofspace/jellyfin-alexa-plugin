@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta content="width=device-width, initial-scale=1" name="viewport">
+        <title>Alexa Skill Plugin - Jellyfin Account Linking</title>
+        <style>
+            html, body {
+                height: 100%;
+                width: 100%;
+                margin: 0;
+            }
+
+            body {
+                display: flex;
+                background-image: linear-gradient(42deg, rgb(30, 30, 60) 0%, rgb(30, 60, 120) 33%, rgb(120, 50, 120) 66%);
+            }
+
+            form {
+                margin: auto;
+            }
+
+            input {
+                display: block;
+                margin-top: 5px;
+                border-radius: 4px;
+            }
+
+            button {
+                margin-top: 10px;
+                border-radius: 4px;
+            }
+        </style>
+    </head>
+    <body>
+    <form method="post">
+        <input name="username" placeholder="Username" required type="text"/>
+        <input name="password" placeholder="Password" required type="password"/>
+        <input name="csrf_token" type="hidden" value="{{ csrf_token }}"/>
+        <div id="errorInfo" style="color:white;padding: 5%;display: none;"></div>
+        <button type="submit">Link account</button>
+    </form>
+    </body>
+    <script>
+        var queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        
+        if (urlParams.has("error")) {
+            var error = urlParams.get("error");
+            var errorInfo = document.getElementById('errorInfo');
+            errorInfo.innerHTML = error;
+            errorInfo.style.display = 'block';
+        }
+    </script>
+</html>

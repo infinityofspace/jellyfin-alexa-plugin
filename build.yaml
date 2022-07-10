@@ -1,0 +1,14 @@
+---
+name: "Alexa Skill"
+guid: "c5df7de0-8777-4b3c-a70d-5c3dae359c9e"
+version: "1.0.0.0"
+targetAbi: "10.8.0.0"
+framework: "net6.0"
+overview: "Alexa skill plugin for Jellyfin"
+description: >
+  This is a Jellyfin plugin for an Alexa skill to play media from your Jellyfin server.
+  Besides, simple playback, other additional functions like playback of playlists or managing favorites are included.
+category: "General"
+owner: "infinityofspace"
+artifacts:
+- "Jellyfin.Plugin.AlexaSkill.dll"
