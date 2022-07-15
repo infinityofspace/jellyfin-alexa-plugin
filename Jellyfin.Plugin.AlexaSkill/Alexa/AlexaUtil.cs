@@ -24,7 +24,7 @@ public static class AlexaUtil
         ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         ILogger logger = loggerFactory.CreateLogger<Plugin>();
 
-        logger.LogCritical("Creating a new skill...");
+        logger.LogDebug("Creating a new skill...");
 
         PluginConfiguration configuration = Plugin.Instance!.Configuration;
 
@@ -33,7 +33,7 @@ public static class AlexaUtil
 
         configuration.SkillId = skillIdObj.Id;
         string skillId = skillIdObj.Id;
-        logger.LogCritical("New skill created with ID: {0}", skillId);
+        logger.LogDebug("New skill created with ID: {0}", skillId);
 
         // wait until the skill is build
         SkillStatus status;

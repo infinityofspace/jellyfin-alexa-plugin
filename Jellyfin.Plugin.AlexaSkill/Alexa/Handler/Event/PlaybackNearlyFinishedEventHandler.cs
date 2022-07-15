@@ -49,7 +49,7 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
     }
 
     /// <summary>
-    /// Respond with next item in the queue, otherwiese sginal end of playback queue.
+    /// Respond with next item in the queue, otherwise sginal end of playback queue.
     /// </summary>
     /// <param name="request">The skill request which should be handled.</param>
     /// <param name="context">The context of the skill intent request.</param>
@@ -78,8 +78,6 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
         }
 
         BaseItem item = _libraryManager.GetItemById((Guid)next_item_id);
-
-        session.FullNowPlayingItem = item;
 
         string item_id = item.Id.ToString();
         string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();

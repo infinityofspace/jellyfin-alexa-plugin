@@ -5,32 +5,37 @@ using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
+using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.AlexaSkill.Data;
+using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Playlists;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Querying;
 using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 
 /// <summary>
-/// Handler for PlayFavorites intents.
+/// Handler for PlayPlaylist intents.
 /// </summary>
-public class PlayFavoritesIntentHandler : BaseHandler
+public class PlayPlaylistIntentHandler : BaseHandler
 {
     private ILibraryManager _libraryManager;
     private IUserManager _userManager;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PlayFavoritesIntentHandler"/> class.
+    /// Initializes a new instance of the <see cref="PlayPlaylistIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Instance of the <see cref="ISessionManager"/> interface.</param>
     /// <param name="dbRepo">Instance of the <see cref="DbRepo"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="loggerFactory">Instance of the <see cref="ILoggerFactory"/> interface.</param>
-    public PlayFavoritesIntentHandler(
+    public PlayPlaylistIntentHandler(
         ISessionManager sessionManager,
         DbRepo dbRepo,
         ILibraryManager libraryManager,
@@ -45,50 +50,64 @@ public class PlayFavoritesIntentHandler : BaseHandler
     public override bool CanHandle(Request request)
     {
         IntentRequest? intentRequest = request as IntentRequest;
-        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "PlayFavoritesIntent", System.StringComparison.Ordinal);
+        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "PlayPlaylistIntent", System.StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Resume any currently playing media or ask the user to say some media name to play.
+    /// Play a playlist by its name.
     /// </summary>
     /// <param name="request">The skill request which should be handled.</param>
     /// <param name="context">The context of the skill intent request.</param>
     /// <param name="user">The user instance.</param>
     /// <param name="session">The session instance.</param>
-    /// <returns>Play directive of the last added items.</returns>
+    /// <returns>Play directive of the playlist.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
+        IntentRequest intentRequest = (IntentRequest)request;
+
+        string playlistName = intentRequest.Intent.Slots["playlist"].Value;
+
+        Logger.LogDebug("Play playlist: {0}", playlistName);
+
         InternalItemsQuery query = new InternalItemsQuery()
         {
             User = _userManager.GetUserById(session.UserId),
-            IsFavorite = true,
-            SourceTypes = new[] { SourceType.Library },
-            DtoOptions = new MediaBrowser.Controller.Dto.DtoOptions(true)
+            SearchTerm = playlistName,
+            IncludeItemTypes = new[] { BaseItemKind.Playlist },
+            DtoOptions = new DtoOptions(true),
         };
 
-        List<BaseItem> favoriteItems = _libraryManager.GetItemList(query);
+        QueryResult<BaseItem> playlists = _libraryManager.GetItemsResult(query);
 
-        if (favoriteItems.Count == 0)
+        if (playlists.TotalRecordCount == 0)
         {
-            return ResponseBuilder.Tell("No favorite items found.");
+            return ResponseBuilder.Tell("Could not find a playlist with the name " + playlistName);
+        }
+
+        BaseItem playlist = playlists.Items[0];
+
+        // Get the playlist items
+        List<BaseItem> playlistItems = Playlist.GetPlaylistItems(MediaType.Audio, new[] { playlist }, _userManager.GetUserByName(user.Id), new DtoOptions(true));
+
+        if (playlistItems.Count == 0)
+        {
+            return ResponseBuilder.Tell("The playlist is empty.");
         }
 
         List<QueueItem> queueItems = new List<QueueItem>();
-
-        for (int i = 0; i < favoriteItems.Count; i++)
+        for (int i = 0; i < playlistItems.Count; i++)
         {
-            BaseItem item = favoriteItems[i];
+            BaseItem item = playlistItems[i];
             queueItems.Add(new QueueItem
             {
                 Id = item.Id,
-                PlaylistItemId = null,
+                PlaylistItemId = playlist.Id.ToString(),
             });
         }
 
         session.NowPlayingQueue = queueItems;
-        session.FullNowPlayingItem = favoriteItems[0];
 
-        string item_id = favoriteItems[0].Id.ToString();
+        string item_id = queueItems[0].Id.ToString();
         string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
 
         return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);

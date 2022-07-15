@@ -9,17 +9,17 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 
 /// <summary>
-/// Handler for AMAZON.PreviousIntent intents.
+/// Handler for UnmarkFavoriteIntent intents.
 /// </summary>
-public class PreviousIntentHandler : BaseHandler
+public class UnmarkFavoriteIntentHandler : BaseHandler
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PreviousIntentHandler"/> class.
+    /// Initializes a new instance of the <see cref="UnmarkFavoriteIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Session manager instance.</param>
     /// <param name="dbRepo">The database repository instance.</param>
     /// <param name="loggerFactory">Logger factory instance.</param>
-    public PreviousIntentHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+    public UnmarkFavoriteIntentHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
     {
     }
 
@@ -27,19 +27,26 @@ public class PreviousIntentHandler : BaseHandler
     public override bool CanHandle(Request request)
     {
         IntentRequest? intentRequest = request as IntentRequest;
-        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "AMAZON.PreviousIntent", System.StringComparison.Ordinal);
+        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "UnmarkFavoriteIntent", System.StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Resume any currently playing media or ask the user to say some media name to play.
+    /// Remove the currently playing media from the favorite list.
     /// </summary>
     /// <param name="request">The skill request which should be handled.</param>
     /// <param name="context">The context of the skill intent request.</param>
     /// <param name="user">The user instance.</param>
     /// <param name="session">The session instance.</param>
-    /// <returns>A play directive or a question what should be played.</returns>
+    /// <returns>Confirmation statement that the media was removed from the favorites list or error message when the media can not be found.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        return ResponseBuilder.Ask("Welcome to Jellyfin Skill, what can I play?", new Reprompt("Please tell me, what should I play?"));
+        if (session.NowPlayingItem == null)
+        {
+            return ResponseBuilder.Tell("Sorry I could not find the media.");
+        }
+
+        // TODO: remove media to favorites list
+
+        return ResponseBuilder.Tell("Media removed from the favorites list.");
     }
 }

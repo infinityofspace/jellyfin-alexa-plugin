@@ -34,15 +34,15 @@ public class PauseIntentHandler : BaseHandler
     }
 
     /// <summary>
-    /// Resume any currently playing media or ask the user to say some media name to play.
+    /// Pause any currently playing media.
     /// </summary>
     /// <param name="request">The skill request which should be handled.</param>
     /// <param name="context">The context of the skill intent request.</param>
     /// <param name="user">The user instance.</param>
     /// <param name="session">The session instance.</param>
-    /// <returns>A play directive or a question what should be played.</returns>
+    /// <returns>Emptry skill response.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        return ResponseBuilder.Ask("Welcome to Jellyfin Skill, what can I play?", new Reprompt("Please tell me, what should I play?"));
+        return ResponseBuilder.AudioPlayerStop();
     }
 }

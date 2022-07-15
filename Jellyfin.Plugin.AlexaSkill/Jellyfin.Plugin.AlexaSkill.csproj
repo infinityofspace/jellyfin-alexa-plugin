@@ -37,20 +37,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Configuration\config.html" />
+    <EmbeddedResource Include="Configuration/config.html" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Alexa\InteractionModel\model_de_DE.json" />
-    <EmbeddedResource Include="Alexa\InteractionModel\model_en_US.json" />
+    <EmbeddedResource Include="Alexa/InteractionModel/model_de_DE.json" />
+    <EmbeddedResource Include="Alexa/InteractionModel/model_en_US.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Alexa\Manifest\manifest.json" />
+    <EmbeddedResource Include="Alexa/Manifest/manifest.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Api\Pages\account_linking.html" />
+    <EmbeddedResource Include="Api/Pages/account_linking.html" />
   </ItemGroup>
 
 </Project>

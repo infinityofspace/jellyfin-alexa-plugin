@@ -158,7 +158,7 @@ public class SkillUpdate : IServerEntryPoint
                     try
                     {
                         // update the skill in the cloud
-                        await skill.Update(Plugin.Instance.Configuration.SkillId).ConfigureAwait(false);
+                        await Plugin.Instance.Skill.Update(Plugin.Instance.Configuration.SkillId).ConfigureAwait(false);
 
                         // wait until the skill is build
                         while (true)

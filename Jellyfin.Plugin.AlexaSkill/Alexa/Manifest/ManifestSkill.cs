@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Alexa.NET.Management;
 using Alexa.NET.Management.Api;
+using Alexa.NET.Management.Internals;
 using Alexa.NET.Management.Manifest;
 using Alexa.NET.Management.Skills;
+using Jellyfin.Plugin.AlexaSkill.Alexa.Interface;
 using Jellyfin.Plugin.AlexaSkill.Api;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
@@ -20,12 +22,19 @@ public class ManifestSkill : Skill
     /// <param name="ressourcePath">Path to the manifest ressource.</param>
     public ManifestSkill(string ressourcePath)
     {
+        CustomApiInterfaceConverter.InterfaceLookup = new Dictionary<string, Func<CustomApiInterface>>
+        {
+            { "ALEXA_EXTENSION", () => new ExtensionInterface() },
+            { "AUDIO_PLAYER", () => new AudioPlayerInterface() },
+            { "VIDEO_APP", () => new VideoAppInterface() }
+        };
+
         Manifest = Util.DeserializeFromFile<Skill>(ressourcePath).Manifest;
         AddVersionTag();
 
-        if (Plugin.Instance != null && !string.IsNullOrEmpty(Plugin.Instance!.Configuration.ServerAddress))
+        if (Plugin.Instance != null && !string.IsNullOrEmpty(Plugin.Instance.Configuration.ServerAddress))
         {
-            SetApiEndpoint(Plugin.Instance!.Configuration.ServerAddress, Plugin.Instance.Configuration.SslCertType);
+            SetApiEndpoint(Plugin.Instance.Configuration.ServerAddress, Plugin.Instance.Configuration.SslCertType);
         }
     }
 
@@ -35,6 +44,13 @@ public class ManifestSkill : Skill
     /// <param name="manifest">Manifest of the skill.</param>
     public ManifestSkill(SkillManifest manifest)
     {
+        CustomApiInterfaceConverter.InterfaceLookup = new Dictionary<string, Func<CustomApiInterface>>
+        {
+            { "ALEXA_EXTENSION", () => new ExtensionInterface() },
+            { "AUDIO_PLAYER", () => new AudioPlayerInterface() },
+            { "VIDEO_APP", () => new VideoAppInterface() }
+        };
+
         Manifest = manifest;
         AddVersionTag();
 
@@ -113,7 +129,7 @@ public class ManifestSkill : Skill
             {
                 if (Manifest.Apis[i] is CustomApi)
                 {
-                    Manifest.Apis.RemoveAt(i);
+                    ((CustomApi)Manifest.Apis[i]).Endpoint = null;
                     return;
                 }
             }

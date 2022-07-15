@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Alexa.NET.Management.AccountLinking;
 using Alexa.NET.Request;
+using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Jellyfin.Plugin.AlexaSkill.Alexa;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
@@ -65,6 +66,7 @@ public class RequestController : ControllerBase
             new NextIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
             new PreviousIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
             new PlayLastAddedIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
+            new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
@@ -219,8 +221,6 @@ public class RequestController : ControllerBase
     [Consumes("application/json")]
     public ActionResult HandleIntentRequest([FromBody] dynamic json)
     {
-        _logger.LogCritical("Alexa skill request");
-
         SkillRequest req = JsonConvert.DeserializeObject<SkillRequest>(json.ToString());
 
         string accessToken = req.Context.System.User.AccessToken;
@@ -237,7 +237,7 @@ public class RequestController : ControllerBase
             return new NoContentResult();
         }
 
-        _logger.LogInformation("{0}", req.Request.GetType().ToString());
+        _logger.LogInformation("Alexa request of type: {0}", req.Request.GetType().ToString());
 
         foreach (BaseHandler h in handler)
         {
@@ -252,9 +252,16 @@ public class RequestController : ControllerBase
             }
         }
 
-        _logger.LogWarning("Unhandled skill request: {0}", req.Request.Type.ToString());
+        if (req.Request is IntentRequest)
+        {
+            _logger.LogWarning("Unhandled skill intent request: {0}", ((IntentRequest)req.Request).Intent.Name);
+        }
+        else
+        {
+            _logger.LogWarning("Unhandled skill request: {0}", req.Request.Type);
+        }
 
-        return new NoContentResult();
+        return new BadRequestResult();
     }
 
     /// <summary>

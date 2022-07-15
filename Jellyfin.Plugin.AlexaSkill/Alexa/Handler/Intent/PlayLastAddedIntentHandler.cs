@@ -15,22 +15,22 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 
 /// <summary>
-/// Handler for PlayPlaylist intents.
+/// Handler for PlayLastAdded intents.
 /// </summary>
-public class PlayPlaylistIntentHandler : BaseHandler
+public class PlayLastAddedIntentHandler : BaseHandler
 {
     private ILibraryManager _libraryManager;
     private IUserManager _userManager;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PlayPlaylistIntentHandler"/> class.
+    /// Initializes a new instance of the <see cref="PlayLastAddedIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Instance of the <see cref="ISessionManager"/> interface.</param>
     /// <param name="dbRepo">Instance of the <see cref="DbRepo"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="loggerFactory">Instance of the <see cref="ILoggerFactory"/> interface.</param>
-    public PlayPlaylistIntentHandler(
+    public PlayLastAddedIntentHandler(
         ISessionManager sessionManager,
         DbRepo dbRepo,
         ILibraryManager libraryManager,
@@ -45,24 +45,23 @@ public class PlayPlaylistIntentHandler : BaseHandler
     public override bool CanHandle(Request request)
     {
         IntentRequest? intentRequest = request as IntentRequest;
-        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "PlayPlaylist", System.StringComparison.Ordinal);
+        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "PlayLastAddedIntent", System.StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Play a playlist by its name.
+    /// Resume any currently playing media or ask the user to say some media name to play.
     /// </summary>
     /// <param name="request">The skill request which should be handled.</param>
     /// <param name="context">The context of the skill intent request.</param>
     /// <param name="user">The user instance.</param>
     /// <param name="session">The session instance.</param>
-    /// <returns>Play directive of the playlist.</returns>
+    /// <returns>Play directive of the last added items.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
         InternalItemsQuery query = new InternalItemsQuery()
         {
             User = _userManager.GetUserById(session.UserId),
             MinDateLastSavedForUser = DateTime.Today.AddDays(-3),
-            SourceTypes = new[] { SourceType.Library },
             DtoOptions = new MediaBrowser.Controller.Dto.DtoOptions(true)
         };
 
@@ -86,7 +85,6 @@ public class PlayPlaylistIntentHandler : BaseHandler
         }
 
         session.NowPlayingQueue = queueItems;
-        session.FullNowPlayingItem = latestItems[0];
 
         string item_id = latestItems[0].Id.ToString();
         string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
