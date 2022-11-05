@@ -1,0 +1,40 @@
+name: dev build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Parse version
+        id: version
+        run: echo "VERSION="$(grep -oP "(?<=<Version>)[^<]+" Directory.Build.props) >> $GITHUB_OUTPUT
+
+      - name: Create version tag string
+        id: version-string
+        run: echo "VERSION_STRING="${{ steps.version.outputs.VERSION }}-$(date +%s)-dev >> $GITHUB_OUTPUT
+
+      - name: Setup .NET Core SDK 6.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build
+        run: dotnet publish --configuration Debug /p:Version=${{ steps.version-string.outputs.VERSION_STRING }} /p:AssemblyVersion=${{ steps.version-string.outputs.VERSION_STRING }} /p:FileVersion=${{ steps.version-string.outputs.VERSION_STRING }}
+
+      - name: Test
+        run: dotnet test --verbosity normal
+
+      - name: Create zip
+        run: zip -r AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip Jellyfin.Plugin.AlexaSkill/bin/Debug/net6.0/publish/
+
+      - name: Archive plugin zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: jellyfin-alexa-plugin
+          path: AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip
