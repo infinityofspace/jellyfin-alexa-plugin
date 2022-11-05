@@ -15,7 +15,6 @@ namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 /// </summary>
 public class ResumeIntentHandler : BaseHandler
 {
-
     private ILibraryManager _libraryManager;
 
     /// <summary>
