@@ -86,9 +86,11 @@ public class PlayLastAddedIntentHandler : BaseHandler
 
         session.NowPlayingQueue = queueItems;
 
-        string item_id = latestItems[0].Id.ToString();
-        string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
+        BaseItem prevItem = _libraryManager.GetItemById(latestItems[0].Id);
+        session.FullNowPlayingItem = prevItem;
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);
+        string item_id = prevItem.Id.ToString();
+
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
     }
 }

@@ -23,7 +23,7 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         // set default options here
         sslCertType = SslCertificateType.Trusted;
-        invocationName = "jellyfin";
+        invocationName = "jellyfin player";
         SmapiClientId = string.Empty;
         SmapiClientSecret = string.Empty;
         SmapiRefreshToken = string.Empty;

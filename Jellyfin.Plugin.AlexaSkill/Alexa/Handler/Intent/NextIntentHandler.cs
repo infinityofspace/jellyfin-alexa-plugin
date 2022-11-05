@@ -1,35 +1,46 @@
-using System;
 using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
 using Jellyfin.Plugin.AlexaSkill.Data;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 
 /// <summary>
-/// Handler for AMAZON.NextIntent intents.
+/// Handler for AMAZON.NextIntent intents and next directive.
 /// </summary>
 public class NextIntentHandler : BaseHandler
 {
+    private ILibraryManager _libraryManager;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="NextIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Session manager instance.</param>
     /// <param name="dbRepo">The database repository instance.</param>
+    /// <param name="libraryManager">The library manager instance.</param>
     /// <param name="loggerFactory">Logger factory instance.</param>
-    public NextIntentHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+    public NextIntentHandler(
+        ISessionManager sessionManager,
+        DbRepo dbRepo,
+        ILibraryManager libraryManager,
+        ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
     {
+        _libraryManager = libraryManager;
     }
 
     /// <inheritdoc/>
     public override bool CanHandle(Request request)
     {
         IntentRequest? intentRequest = request as IntentRequest;
-        return intentRequest != null && string.Equals(intentRequest.Intent.Name, "AMAZON.NextIntent", System.StringComparison.Ordinal);
+        PlaybackControllerRequest? playbackControllerRequest = request as PlaybackControllerRequest;
+        return (intentRequest != null && string.Equals(intentRequest.Intent.Name, "AMAZON.NextIntent", System.StringComparison.Ordinal)) ||
+            (playbackControllerRequest != null && playbackControllerRequest.PlaybackRequestType is PlaybackControllerRequestType.Next);
     }
 
     /// <summary>
@@ -43,7 +54,7 @@ public class NextIntentHandler : BaseHandler
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
         // check if we have any media in the queue and the is currently something playing
-        if (session.NowPlayingQueue.Count == 0 || session.NowPlayingItem == null)
+        if (session.NowPlayingQueue.Count == 0 || session.FullNowPlayingItem == null)
         {
             return ResponseBuilder.Empty();
         }
@@ -51,12 +62,15 @@ public class NextIntentHandler : BaseHandler
         // get the next item in the queue
         for (int i = 0; i > session.NowPlayingQueue.Count - 1; i++)
         {
-            if (session.NowPlayingQueue[i].Id == session.NowPlayingItem.Id)
+            if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem.Id)
             {
+                System.Guid nextItemId = session.NowPlayingQueue[i + 1].Id;
                 string item_id = session.NowPlayingQueue[i + 1].Id.ToString();
-                string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
+                BaseItem nextItem = _libraryManager.GetItemById(nextItemId);
 
-                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, audioUrl, item_id);
+                session.FullNowPlayingItem = nextItem;
+
+                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id);
             }
         }
 

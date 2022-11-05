@@ -1,10 +1,11 @@
-using System;
 using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
 using Jellyfin.Plugin.AlexaSkill.Data;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
 
@@ -15,14 +16,22 @@ namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 /// </summary>
 public class LaunchRequestHandler : BaseHandler
 {
+    private ILibraryManager _libraryManager;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LaunchRequestHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Session manager instance.</param>
     /// <param name="dbRepo">The database repository instance.</param>
+    /// <param name="libraryManager">The library manager instance.</param>
     /// <param name="loggerFactory">Logger factory instance.</param>
-    public LaunchRequestHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+    public LaunchRequestHandler(
+        ISessionManager sessionManager,
+        DbRepo dbRepo,
+        ILibraryManager libraryManager,
+        ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
     {
+        _libraryManager = libraryManager;
     }
 
     /// <inheritdoc/>
@@ -50,20 +59,20 @@ public class LaunchRequestHandler : BaseHandler
         }
 
         // check if something is currently playing which we can resume
-        if (session.NowPlayingItem != null)
+        if (session.FullNowPlayingItem != null)
         {
-            string item_id = session.NowPlayingItem.Id.ToString();
-            string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
+            string item_id = session.FullNowPlayingItem.Id.ToString();
 
-            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);
+            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
         }
         else
         {
             // resume the first item in the queue
-            string item_id = session.NowPlayingQueue[0].Id.ToString();
-            string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
+            BaseItem item = _libraryManager.GetItemById(session.NowPlayingQueue[0].Id);
+            string item_id = item.Id.ToString();
+            session.FullNowPlayingItem = item;
 
-            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);
+            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
         }
     }
 }

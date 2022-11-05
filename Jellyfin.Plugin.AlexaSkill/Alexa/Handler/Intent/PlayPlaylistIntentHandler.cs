@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Alexa.NET;
 using Alexa.NET.Request;
@@ -69,9 +68,11 @@ public class PlayPlaylistIntentHandler : BaseHandler
 
         Logger.LogDebug("Play playlist: {0}", playlistName);
 
+        Jellyfin.Data.Entities.User jellyfinUser = _userManager.GetUserById(session.UserId);
+
         InternalItemsQuery query = new InternalItemsQuery()
         {
-            User = _userManager.GetUserById(session.UserId),
+            User = jellyfinUser,
             SearchTerm = playlistName,
             IncludeItemTypes = new[] { BaseItemKind.Playlist },
             DtoOptions = new DtoOptions(true),
@@ -107,9 +108,11 @@ public class PlayPlaylistIntentHandler : BaseHandler
 
         session.NowPlayingQueue = queueItems;
 
-        string item_id = queueItems[0].Id.ToString();
-        string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
+        BaseItem prevItem = _libraryManager.GetItemById(queueItems[0].Id);
+        session.FullNowPlayingItem = prevItem;
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);
+        string item_id = prevItem.Id.ToString();
+
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
     }
 }

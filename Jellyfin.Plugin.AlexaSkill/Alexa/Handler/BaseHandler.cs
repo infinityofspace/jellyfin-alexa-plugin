@@ -1,3 +1,4 @@
+using System;
 using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
@@ -13,7 +14,6 @@ namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 /// </summary>
 public abstract class BaseHandler
 {
-    private ISessionManager _sessionManager;
     private DbRepo _dbRepo;
 
     /// <summary>
@@ -24,10 +24,15 @@ public abstract class BaseHandler
     /// <param name="loggerFactory">The logger factory instance.</param>
     protected BaseHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory)
     {
-        _sessionManager = sessionManager;
+        SessionManager = sessionManager;
         _dbRepo = dbRepo;
         Logger = loggerFactory.CreateLogger<BaseHandler>();
     }
+
+    /// <summary>
+    /// Gets or sets the session manager instance.
+    /// </summary>
+    protected ISessionManager SessionManager { get; set; }
 
     /// <summary>
     /// Gets or sets logger instance.
@@ -52,7 +57,7 @@ public abstract class BaseHandler
             return ResponseBuilder.Tell("User not found. Please relink your account.");
         }
 
-        SessionInfo session = _sessionManager.GetSessionByAuthenticationToken(token, context.System.Device.DeviceID, Plugin.Instance!.Configuration.ServerAddress).Result;
+        SessionInfo session = SessionManager.GetSessionByAuthenticationToken(token, context.System.Device.DeviceID, Plugin.Instance!.Configuration.ServerAddress).Result;
 
         return Handle(request, context, user, session);
     }
@@ -73,4 +78,16 @@ public abstract class BaseHandler
     /// <param name="session">The session instance.</param>
     /// <returns>The skill response to the request.</returns>
     public abstract SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session);
+
+    /// <summary>
+    /// Get a stream url for the given item.
+    /// </summary>
+    /// <param name="itemId">Id of the item to stream.</param>
+    /// <param name="user">The user for which the item should be played.</param>
+    /// <returns>Streamable url of the requested item.</returns>
+    public string GetStreamUrl(string itemId, Entities.User user)
+    {
+        // TODO: add possible transcoding
+        return new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Items/" + itemId + "/Download?api_key=" + user.Token).ToString();
+    }
 }

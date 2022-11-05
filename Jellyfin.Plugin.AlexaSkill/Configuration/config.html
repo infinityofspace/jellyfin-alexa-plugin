@@ -17,7 +17,6 @@
 
                     <div class="readOnlyContent">
                         <div class="paperList" style="padding:1em">
-                            <p>Skill ID: <span id="SkillId"></span></p>
                             <p>Skill Version (Local): <span id="SkillVersion"></span></p>
                             <p>Skill Version (Cloud): <span id="SkillVersionCloud"></span></p>
                         </div>
@@ -45,7 +44,7 @@
                     <div class="inputContainer">
                         <label class="inputLabel inputLabelUnfocused" for="InvocationName">Invocation Name</label>
                         <input id="InvocationName" name="InvocationName" type="text" is="emby-input" />
-                        <div class="fieldDescription">The invocation name of the skill. This is the name when you start using the Skill. Like "Alexa, start 'Jellyfin'".</div>
+                        <div class="fieldDescription">The invocation name of the skill. This is the name when you start using the Skill. Like "Alexa, start 'Jellyfin Player'". The name must be at least 2 words.</div>
                     </div>
                     <div class="inputContainer">
                         <label class="inputLabel inputLabelUnfocused" for="SmapiClientId">SMAPI Client ID</label>
@@ -66,6 +65,11 @@
                         <label class="inputLabel inputLabelUnfocused" for="VendorId">Vendor ID</label>
                         <input id="VendorId" name="VendorId" type="text" is="emby-input" />
                         <div class="fieldDescription">The vendor ID for which the skill should be created.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="SkillId">Skill ID</label>
+                        <input id="SkillId" name="SkillId" type="text" is="emby-input" />
+                        <div class="fieldDescription">The ID of the alexa skill. Leave empty to create a new alexa skill.</div>
                     </div>
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
@@ -106,6 +110,7 @@
                         document.querySelector('#SmapiClientSecret').value = config.SmapiClientSecret;
                         document.querySelector('#SmapiRefreshToken').value = config.SmapiRefreshToken;
                         document.querySelector('#VendorId').value = config.VendorId;
+                        document.querySelector('#SkillId').value = config.SkillId;
 
                         if (config.SkillId) {
                             document.querySelector('#SkillId').innerText = config.SkillId;
@@ -142,6 +147,13 @@
                         config.SmapiClientSecret = document.querySelector('#SmapiClientSecret').value;
                         config.SmapiRefreshToken = document.querySelector('#SmapiRefreshToken').value;
                         config.VendorId = document.querySelector('#VendorId').value;
+                        config.SkillId = document.querySelector('#SkillId').value;
+
+                        if (config.InvocationName.split(" ").length < 2) {
+                            alert("The invocation name must be at least 2 words.");
+                            Dashboard.hideLoadingMsg();
+                            return;
+                        }
 
                         ApiClient.updatePluginConfiguration(Config.pluginUniqueId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
@@ -189,13 +201,6 @@
             
             function onValuesUpdated() {
                 ApiClient.getPluginConfiguration(Config.pluginUniqueId).then(function (config) {
-                    console.log(config.ServerAddress);
-                    console.log(config.InvocationName);
-                    console.log(config.SmapiClientId);
-                    console.log(config.SmapiClientSecret);
-                    console.log(config.SmapiRefreshToken);
-                    console.log(config.VendorId);
-
                     if (config.ServerAddress
                             && config.InvocationName
                             && config.SmapiClientId

@@ -61,19 +61,26 @@ public class RequestController : ControllerBase
 
         handler = new BaseHandler[]
         {
-            new LaunchRequestHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
+            new LaunchRequestHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+
+            new PlayIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
             new PauseIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
-            new NextIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
-            new PreviousIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
+            new NextIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+            new PreviousIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+            new ResumeIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+
             new PlayLastAddedIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
+
             new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackNearlyFinishedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackStartedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new PlaybackStoppedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
             new SessionEndedRequestHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
+
+            new ExceptionHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory)
         };
     }
 
@@ -238,7 +245,7 @@ public class RequestController : ControllerBase
         Entities.User? user = Plugin.Instance!.DbRepo.GetUserByToken(accessToken);
         if (user == null)
         {
-            _logger.LogError("Invalid access token: {0}", accessToken);
+            _logger.LogError("User not found or invalid access token: {0}", accessToken);
 
             return Unauthorized();
         }
