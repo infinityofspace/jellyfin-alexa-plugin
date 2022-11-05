@@ -67,9 +67,9 @@ public class SmapiAccessToken
         {
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            Dictionary<string, string> json = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
+            Dictionary<string, string>? json = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
 
-            if (json.TryGetValue("access_token", out var token) && json.TryGetValue("expires_in", out var expiresIn) && int.TryParse(expiresIn, out int offset))
+            if (json != null && json.TryGetValue("access_token", out var token) && json.TryGetValue("expires_in", out var expiresIn) && int.TryParse(expiresIn, out int offset))
             {
                 accessTokenExpiration = DateTime.Now.AddSeconds(offset);
                 accessToken = token;

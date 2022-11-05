@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using Alexa.NET.Management.Manifest;
 using Alexa.NET.Management.Skills;
+using Jellyfin.Plugin.AlexaSkill.Exceptions;
 using Newtonsoft.Json;
 
 namespace Jellyfin.Plugin.AlexaSkill;
@@ -31,7 +32,15 @@ public static class Util
         if (resource != null)
         {
             string json = new StreamReader(resource).ReadToEnd();
-            return JsonConvert.DeserializeObject<T>(json);
+            T? val = JsonConvert.DeserializeObject<T>(json);
+            if (val != null)
+            {
+                return val;
+            }
+            else
+            {
+                throw new JsonParsingException($"Could not parse json file {ressourcePath} to {typeof(T).Name}.");
+            }
         }
         else
         {
