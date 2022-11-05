@@ -42,11 +42,9 @@
     </form>
     </body>
     <script>
-        var queryString = window.location.search;
-        const urlParams = new URLSearchParams(queryString);
+        var error = "{{ error }}";
         
-        if (urlParams.has("error")) {
-            var error = urlParams.get("error");
+        if (error != "") {
             var errorInfo = document.getElementById('errorInfo');
             errorInfo.innerHTML = error;
             errorInfo.style.display = 'block';

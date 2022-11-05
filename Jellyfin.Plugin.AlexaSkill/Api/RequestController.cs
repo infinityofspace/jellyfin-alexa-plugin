@@ -83,12 +83,14 @@ public class RequestController : ControllerBase
     /// <param name="clientId">The client id of the skill account linking request.</param>
     /// <param name="redirectUri">The redirect uri of the skill account linking request.</param>
     /// <param name="state">The state of the skill account linking request.</param>
+    /// <param name="error">The error of the skill account linking request.</param>
     /// <returns>The account linking html page.</returns>
     [HttpGet("account-linking")]
     public ActionResult GetAccountLinking(
         [FromQuery(Name = "client_id")] string clientId,
         [FromQuery(Name = "redirect_uri")] string redirectUri,
-        [FromQuery(Name = "state")] string state)
+        [FromQuery(Name = "state")] string state,
+        [FromQuery(Name = "error")] string? error)
     {
         bool valid_redirect_uri = false;
         foreach (string url in Config.ValidRedirectUrls)
@@ -125,6 +127,15 @@ public class RequestController : ControllerBase
         string page = new StreamReader(resource).ReadToEnd();
 
         page = page.Replace("{{ csrf_token }}", GetNewCsrfToken(), StringComparison.Ordinal);
+
+        if (error != null)
+        {
+            page = page.Replace("{{ error }}", error, StringComparison.Ordinal);
+        }
+        else
+        {
+            page = page.Replace("{{ error }}", string.Empty, StringComparison.Ordinal);
+        }
 
         return Content(page, "text/html");
     }
