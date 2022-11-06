@@ -30,14 +30,8 @@ jobs:
       - name: Test
         run: dotnet test --verbosity normal
 
-      - name: Create zip
-        run: |
-          mkdir -p archive/Jellyfin.Plugin.AlexaSkill
-          cp -r Jellyfin.Plugin.AlexaSkill/bin/Debug/net6.0/publish/* archive/Jellyfin.Plugin.AlexaSkill
-          cd archive && zip -r AlexaSkill.zip Jellyfin.Plugin.AlexaSkill
-
       - name: Archive plugin zip
         uses: actions/upload-artifact@v3
         with:
-          name: AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip
-          path: archive/AlexaSkill.zip
+          name: AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}
+          path: Jellyfin.Plugin.AlexaSkill/bin/Debug/net6.0/publish/*
