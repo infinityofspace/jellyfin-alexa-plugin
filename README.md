@@ -4,13 +4,13 @@ Alexa skill plugin for Jellyfin
 
 ---
 
-
+[![dev build](https://github.com/infinityofspace/jellyfin-alexa-plugin/actions/workflows/dev-build.yml/badge.svg)](https://github.com/infinityofspace/jellyfin-alexa-plugin/actions/workflows/dev-build.yml) ![GitHub all releases](https://img.shields.io/github/downloads/infinityofspace/jellyfin-alexa-plugin/total?label=total%20downloads)
 
 ---
 
-_Note: This project is still in a very early alpha phase, this means not all features are fully functional yet and features or usage can change significantly between releases.
+_Note: This project is still in a very early alpha phase, this means not all features are fully functional at this time and features or usage can change significantly between releases.
 Moreover, new releases can result in data loss of the skill database.
-Changes on the main branch are not final and may brake your setup, please use the tagged versions for more stable beta versions eg. `v0.x`.
+Changes on the main branch are not final and may brake your setup, please use the tagged versions for more stable beta versions eg. `0.x`.
 Please always create a backup of your setup beforehand._
 
 _Note: If you are looking for a more stable and feature-packed Alexa Skill for Jellyfin, then check out this [project](https://github.com/infinityofspace/jellyfin_alexa_skill)._
@@ -42,6 +42,8 @@ This is a Jellyfin plugin for an Alexa skill to play media from your Jellyfin se
     - play a specific playlist
 - favorite:
     - play favorite media
+    - add media to favorites
+    - remove media from favorites
 - other:
     - multi-language support (see [Supported languages](#supported-languages))
     - multi-user support (any user on the Jellyfin server can use the skill)
@@ -55,29 +57,39 @@ If you have a feature idea, use this [issue template](https://github.com/infinit
 Before you continue, make sure you meet the following requirements:
 - Jellyfin server: 10.8+
 - [Amazon developer account](https://developer.amazon.com/en-US/docs/alexa/ask-overviews/create-developer-account.html)
-- publicly accessible domain with a valid SSL certificate pointing to your Jellyfin server
+- publicly accessible Jellyfin server with a domain and a valid SSL certificate
 
 ## Installation
 
-1. Clone this repository and checkout the latest release:
-
-    ```shell
-    git clone https://github.com/infinityofspace/jellyfin-alexa-plugin.git
-    git checkout <version>
-    ```
-
-2. Ensure you have .NET Core 6.0 SDK setup and installed
-
-3. Build plugin with following command.
-
-    ```sh
-    dotnet publish --configuration Release --output bin
-    ```
-4. Create a folder `AlexaSkill` on your jellyfin server plugin folder (normally this is the located at <root-dir-of-jellyfin-data>/config/plugins)
-5. Stop your Jellyfin server and copy the `Jellyfin.Plugin.AlexaSkill.dll` file from the bin folder into the newly created `AlexaSkill` folder
-6. Restart your Jellyfin server
-7. Go to the plugin settings page and fill out the required values, then click `Save` and `Rebuild Skill` (the first build may take some time)
-8. Now go into your Alexa app and link your desired Jellyfin account
+1. You can either use the prebuilds or build the plugin by yourself:
+   1. Use prebuilds, here you have also two options:
+      1. Use the plugin repository (recommend):
+         1. Open the admin dashboard of your Jellyfin server.
+         2. Go to Plugins and select the `Repositories` tab.
+         3. Add a new repository with the following URL (name can be anything): `https://raw.githubusercontent.com/infinityofspace/jellyfin-alexa-plugin/master/manifest.json`
+         4. Now you can find the plugin under the `General` category in the `Catalog` tab.
+      2. Manually download the latest release:
+         1. Download the lastes release from the [releases page](https://github.com/infinityofspace/jellyfin-alexa-plugin/releases).
+         2. Extract the zip file.
+         3. Copy the folder `Jellyfin.Plugin.AlexaSkill` of the extracted zip to the `plugins` folder of your Jellyfin server.
+   2. Build the plugin by yourself:
+      1. Ensure you have .NET Core 6.0 SDK setup and installed.
+      2. Clone the repository and checkout the latest release tag:
+            ```bash
+            git clone https://github.com/infinityofspace/jellyfin-alexa-plugin.git
+            cd jellyfin-alexa-plugin
+            git checkout <version>
+            ```
+      3. Build plugin with the following command:
+            ```bash
+            dotnet publish --configuration Release
+            ```
+      4. Create a folder named `Jellyfin.Plugin.AlexaSkill` inside the `plugins` folder of your Jellyfin server data folder.
+      5. Copy everything from the folder `Jellyfin.Plugin.AlexaSkill/bin/Release/net6.0/publish/` to the previously created folder `Jellyfin.Plugin.AlexaSkill` in your Jellyfin server `plugin` directory. 
+2. Restart your Jellyfin server.
+3. Go to the plugin settings page and fill out the required values, then click `Save` and `Rebuild Skill` (the first build may take some time). You can find [here](https://github.com/infinityofspace/jellyfin-alexa-plugin/wiki/Configuration) more details on how to fill out the required values.
+4. Now go into your Alexa app and link your desired Jellyfin account.
+5. You are now ready to use the skill. Let's start the skill with "Alexa, start Jellyfin Player" (assuming the invocation name has not been customized).
 
 ## Database
 
