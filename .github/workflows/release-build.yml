@@ -44,7 +44,7 @@ jobs:
           cp -r Jellyfin.Plugin.AlexaSkill/bin/Release/net6.0/publish/* archive/Jellyfin.Plugin.AlexaSkill
           cd archive && zip -r AlexaSkill_${{ steps.version.outputs.VERSION }}.zip Jellyfin.Plugin.AlexaSkill
 
-      - name: Release
+      - name: Create github release
         id: create-release
         uses: softprops/action-gh-release@v1
         with:
@@ -55,7 +55,7 @@ jobs:
           prerelease: true
 
       - name: Add release to repo manifest
-        run: python3 .github/workflows/add_release_to_manifest.py ${{ steps.version.outputs.VERSION }} $(md5sum archive/AlexaSkill_${{ steps.version.outputs.VERSION }}.zip) ${{ fromJSON(steps.create-release.outputs.assets)[0].browser_download_url }}
+        run: python3 .github/workflows/add_release_to_manifest.py ${{ steps.version.outputs.VERSION }} $(md5sum archive/AlexaSkill_${{ steps.version.outputs.VERSION }}.zip)
 
       - name: Commit manifest changes
         run: |
