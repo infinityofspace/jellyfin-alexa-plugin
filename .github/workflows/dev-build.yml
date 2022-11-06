@@ -31,10 +31,13 @@ jobs:
         run: dotnet test --verbosity normal
 
       - name: Create zip
-        run: zip -r AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip Jellyfin.Plugin.AlexaSkill/bin/Debug/net6.0/publish/
+        run: |
+          mkdir -p archive/Jellyfin.Plugin.AlexaSkill
+          cp -r Jellyfin.Plugin.AlexaSkill/bin/Debug/net6.0/publish/* archive/Jellyfin.Plugin.AlexaSkill
+          cd archive && zip -r AlexaSkill.zip Jellyfin.Plugin.AlexaSkill
 
       - name: Archive plugin zip
         uses: actions/upload-artifact@v3
         with:
-          name: jellyfin-alexa-plugin
-          path: AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip
+          name: AlexaSkill_${{ steps.version-string.outputs.VERSION_STRING }}.zip
+          path: archive/AlexaSkill.zip
