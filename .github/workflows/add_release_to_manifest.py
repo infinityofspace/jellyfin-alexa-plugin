@@ -12,7 +12,7 @@ with open("manifest.json", "r") as f:
 
 version = sys.argv[1]
 
-with open(sys.argv[2], "r") as f:
+with open(sys.argv[2], "rb") as f:
     checksum = hashlib.md5()
     while chunk := f.read(4096):
         checksum.update(chunk)
