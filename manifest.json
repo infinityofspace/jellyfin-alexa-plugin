@@ -1,0 +1,11 @@
+[
+    {
+        "category": "General",
+        "guid": "c5df7de0-8777-4b3c-a70d-5c3dae359c9e",
+        "name": "AlexaSkill",
+        "description": "Use your Alexa devices to control and play your media.",
+        "owner": "infinityofspace",
+        "overview": "Alexa skill plugin for Jellyfin",
+        "versions": []
+    }
+]

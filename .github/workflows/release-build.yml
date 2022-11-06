@@ -1,0 +1,70 @@
+name: release build
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: get the tag name
+        id: get_tag
+        run: echo ::set-output name=TAG::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Parse version
+        id: version
+        run: echo "VERSION="$(grep -oP "(?<=<Version>)[^<]+" Directory.Build.props) >> $GITHUB_OUTPUT
+      
+      - name: Check if tag and project version matches
+        run: if ! diff <(echo "${{ steps.get_tag.outputs.TAG }}" ) <(echo "${{ steps.version.outputs.VERSION }}"); then exit -1; fi
+
+      - name: Setup .NET Core SDK 6.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+
+      - name: Build
+        run: dotnet publish --configuration Release
+
+      - name: Test
+        run: dotnet test --verbosity normal
+
+      - name: Create zip
+        run: |
+          mkdir -p archive/Jellyfin.Plugin.AlexaSkill
+          cp -r Jellyfin.Plugin.AlexaSkill/bin/Release/net6.0/publish/* archive/Jellyfin.Plugin.AlexaSkill
+          cd archive && zip -r AlexaSkill_${{ steps.version.outputs.VERSION }}.zip Jellyfin.Plugin.AlexaSkill
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          files: archive/AlexaSkill_${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          prerelease: true
+
+      - name: Add release to repo manifest
+        run: python3 .github/workflows/add_release_to_manifest.py ${{ steps.version.outputs.VERSION }} $(md5sum archive/AlexaSkill_${{ steps.version.outputs.VERSION }}.zip) ${{ fromJSON(steps.<step-id>.outputs.assets)[0].browser_download_url }}
+
+      - name: Commit manifest changes
+        run: |
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Added new release to repo manifest"
+
+      - name: Push manifest changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
