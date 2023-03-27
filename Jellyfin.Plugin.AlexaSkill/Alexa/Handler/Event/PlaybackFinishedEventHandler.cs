@@ -42,7 +42,7 @@ public class PlaybackFinishedEventHandler : BaseHandler
     public override bool CanHandle(Request request)
     {
         AudioPlayerRequest? audioPlayerRequest = request as AudioPlayerRequest;
-        return audioPlayerRequest != null && audioPlayerRequest.AudioRequestType == AudioRequestType.PlaybackStopped;
+        return audioPlayerRequest != null && audioPlayerRequest.AudioRequestType == AudioRequestType.PlaybackFinished;
     }
 
     /// <inheritdoc/>
