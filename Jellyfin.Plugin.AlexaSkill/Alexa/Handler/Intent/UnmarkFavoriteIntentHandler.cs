@@ -62,7 +62,7 @@ public class UnmarkFavoriteIntentHandler : BaseHandler
             return ResponseBuilder.Tell("Sorry I could not find the media.");
         }
 
-        var jellyfinUser = _userManager.GetUserByName(user.Id);
+        var jellyfinUser = _userManager.GetUserById(user.Id);
 
         var data = _userDataRepository.GetUserData(jellyfinUser.InternalId, item.Id.ToString());
 

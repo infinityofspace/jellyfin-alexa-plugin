@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
 using Alexa.NET.Management.Manifest;
@@ -58,35 +60,26 @@ public static class Util
     }
 
     /// <summary>
-    /// Add the current version of this skill to the name of the skill.
+    /// Get all local interaction models json files of the skill.
     /// </summary>
-    /// <param name="skill">The skill where the version tag should be added to.</param>
-    public static void AddVersionTag(Skill skill)
+    /// <returns>List of all interaction models.</returns>
+    public static Collection<Tuple<string, string>> GetLocalInteractionModels()
     {
-        string version = GetVersion();
+        // iter of all model json files in the ressource folder
+        Collection<Tuple<string, string>> interactionModels = new Collection<Tuple<string, string>>();
+        foreach (string ressourcePath in Assembly.GetExecutingAssembly().GetManifestResourceNames())
+        {
+            if (ressourcePath.StartsWith("Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel", StringComparison.Ordinal)
+            && ressourcePath.Contains("model_", StringComparison.Ordinal)
+            && ressourcePath.EndsWith(".json", StringComparison.Ordinal))
+            {
+                // Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel.model_de-DE.json
+                string[] split = ressourcePath.Split(".");
+                string locale = split[split.Length - 2].Split("_")[1];
+                interactionModels.Add(new Tuple<string, string>(locale, ressourcePath));
+            }
+        }
 
-        foreach (KeyValuePair<string, Locale> l in skill.Manifest.PublishingInformation.Locales)
-        {
-            l.Value.Name += " v" + version;
-        }
-    }
-
-    /// <summary>
-    /// Add the current version of this skill to the name of the skill.
-    /// </summary>
-    /// <param name="skill">The skill where the version tag should be added to.</param>
-    /// <returns>The version tag of the skill.</returns>
-    public static string GetVersionTag(Skill skill)
-    {
-        Locale? baseLocale = skill.Manifest.PublishingInformation.Locales.GetValueOrDefault<string, Locale?>("en-US", null);
-        if (baseLocale != null)
-        {
-            string[] split = baseLocale.Name.Split(" ");
-            return split[split.Length - 1];
-        }
-        else
-        {
-            return "unknown";
-        }
+        return interactionModels;
     }
 }

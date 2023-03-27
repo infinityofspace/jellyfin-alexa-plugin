@@ -2,5 +2,10 @@ bin/
 obj/
 
 .vscode/
+.config/
 .idea/
 .env
+
+
+jellyfin_data
+test_media

@@ -1,7 +1,4 @@
-using System.Threading.Tasks;
-using Alexa.NET.Management.Api;
 using Alexa.NET.Management.Skills;
-using Jellyfin.Plugin.AlexaSkill.Configuration;
 using Newtonsoft.Json;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
@@ -16,23 +13,12 @@ public class SkillInteractionModel : SkillInteractionContainer
     /// </summary>
     /// <param name="ressourcePath">Path to the manifest ressource.</param>
     /// <param name="locale">Locale of this interaction model.</param>
-    public SkillInteractionModel(string ressourcePath, string locale)
+    /// <param name="invocationName">Invocation name of this interaction model.</param>
+    public SkillInteractionModel(string locale, string ressourcePath, string invocationName)
     {
         InteractionModel = Util.DeserializeFromFile<SkillInteraction>(ressourcePath);
         Locale = locale;
-        AddCustomizations();
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SkillInteractionModel"/> class.
-    /// </summary>
-    /// <param name="skillInteraction">Skill interaction model of the skill.</param>
-    /// <param name="locale">Locale of this interaction model.</param>
-    public SkillInteractionModel(SkillInteraction skillInteraction, string locale)
-    {
-        InteractionModel = skillInteraction;
-        Locale = locale;
-        AddCustomizations();
+        InvocationName = invocationName;
     }
 
     /// <summary>
@@ -42,26 +28,19 @@ public class SkillInteractionModel : SkillInteractionContainer
     public string Locale { get; set; }
 
     /// <summary>
-    /// Update the interaction model in the Alexa cloud.
+    /// Gets or sets the invocation name of this interaction model.
     /// </summary>
-    /// <param name="skillId">ID of the skill.</param>
-    /// <param name="stage">Stage of the skill.</param>
-    /// <returns>Boolean indicating if the updating was successull.</returns>
-    public Task Update(string skillId, SkillStage stage = SkillStage.Development)
+    [JsonIgnore]
+    public string InvocationName
     {
-        return Plugin.Instance!.SmapiManagement.InteractionModel.Update(skillId, stage, Locale, this);
-    }
-
-    /// <summary>
-    /// Add any custom values to the interaction model.
-    /// </summary>
-    private void AddCustomizations()
-    {
-        if (Plugin.Instance != null)
+        get
         {
-            PluginConfiguration configuration = Plugin.Instance.Configuration;
+            return InteractionModel.Language.InvocationName;
+        }
 
-            InteractionModel.Language.InvocationName = configuration.InvocationName;
+        set
+        {
+            InteractionModel.Language.InvocationName = value;
         }
     }
 }

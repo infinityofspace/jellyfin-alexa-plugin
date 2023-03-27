@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Alexa.NET.Management;
 using Alexa.NET.Management.Api;
 using Alexa.NET.Management.Internals;
 using Alexa.NET.Management.Manifest;
 using Alexa.NET.Management.Skills;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Interface;
-using Jellyfin.Plugin.AlexaSkill.Api;
+using Jellyfin.Plugin.AlexaSkill.Controller;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
 
@@ -20,7 +19,9 @@ public class ManifestSkill : Skill
     /// Initializes a new instance of the <see cref="ManifestSkill"/> class.
     /// </summary>
     /// <param name="ressourcePath">Path to the manifest ressource.</param>
-    public ManifestSkill(string ressourcePath)
+    /// <param name="serverAddress">Server address.</param>
+    /// <param name="sslCertType">SSL certificate type.</param>
+    public ManifestSkill(string ressourcePath, string serverAddress, SslCertificateType sslCertType)
     {
         CustomApiInterfaceConverter.InterfaceLookup = new Dictionary<string, Func<CustomApiInterface>>
         {
@@ -32,10 +33,28 @@ public class ManifestSkill : Skill
         Manifest = Util.DeserializeFromFile<Skill>(ressourcePath).Manifest;
         AddVersionTag();
 
-        if (Plugin.Instance != null && !string.IsNullOrEmpty(Plugin.Instance.Configuration.ServerAddress))
+        SetApiEndpoint(serverAddress, sslCertType);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ManifestSkill"/> class.
+    /// </summary>
+    /// <param name="manifest">Manifest of the skill.</param>
+    /// <param name="serverAddress">Server address.</param>
+    /// <param name="sslCertType">SSL certificate type.</param>
+    public ManifestSkill(SkillManifest manifest, string serverAddress, SslCertificateType sslCertType)
+    {
+        CustomApiInterfaceConverter.InterfaceLookup = new Dictionary<string, Func<CustomApiInterface>>
         {
-            SetApiEndpoint(Plugin.Instance.Configuration.ServerAddress, Plugin.Instance.Configuration.SslCertType);
-        }
+            { "ALEXA_EXTENSION", () => new ExtensionInterface() },
+            { "AUDIO_PLAYER", () => new AudioPlayerInterface() },
+            { "VIDEO_APP", () => new VideoAppInterface() }
+        };
+
+        Manifest = manifest;
+        AddVersionTag();
+
+        SetApiEndpoint(serverAddress, sslCertType);
     }
 
     /// <summary>
@@ -52,33 +71,6 @@ public class ManifestSkill : Skill
         };
 
         Manifest = manifest;
-        AddVersionTag();
-
-        if (Plugin.Instance != null && !string.IsNullOrEmpty(Plugin.Instance.Configuration.ServerAddress))
-        {
-            SetApiEndpoint(Plugin.Instance.Configuration.ServerAddress, Plugin.Instance.Configuration.SslCertType);
-        }
-    }
-
-    /// <summary>
-    /// Update the skill manifest in the Alexa cloud and return a Uri to check the build status of the skill.
-    /// </summary>
-    /// <param name="skillId">ID of the skill.</param>
-    /// <param name="stage">Stage of the skill.</param>
-    /// <returns>Skill id object of the updated skill.</returns>
-    public Task<SkillId> Update(string skillId, SkillStage stage = SkillStage.Development)
-    {
-        return Plugin.Instance!.SmapiManagement!.Skills.Update(skillId, stage, this);
-    }
-
-    /// <summary>
-    /// Create a new skill in the Alexa cloud.
-    /// </summary>
-    /// <param name="vendorId">The vendor ID for which the skill will be created.</param>
-    /// <returns>The ID of the newly created skill or null if something went wrong.</returns>
-    public Task<SkillId> CreateSkill(string vendorId)
-    {
-        return Plugin.Instance!.SmapiManagement!.Skills.Create(vendorId, this);
     }
 
     /// <summary>
@@ -107,7 +99,7 @@ public class ManifestSkill : Skill
         if (baseLocale != null)
         {
             string[] split = baseLocale.Name.Split(" ");
-            return split[split.Length - 1];
+            return split[split.Length - 1].Replace("v", "");
         }
         else
         {
@@ -137,7 +129,7 @@ public class ManifestSkill : Skill
             return;
         }
 
-        Uri endpointUri = new Uri(new Uri(uri), RequestController.ApiBaseUri);
+        Uri endpointUri = new Uri(new Uri(uri), AlexaSkillController.ApiBaseUri);
         string endpointUriString = new Uri(endpointUri, "alexa-request").ToString();
 
         foreach (IApi api in Manifest.Apis)

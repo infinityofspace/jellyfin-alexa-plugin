@@ -88,6 +88,6 @@ public abstract class BaseHandler
     public string GetStreamUrl(string itemId, Entities.User user)
     {
         // TODO: add possible transcoding
-        return new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Items/" + itemId + "/Download?api_key=" + user.Token).ToString();
+        return new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Items/" + itemId + "/Download?api_key=" + user.JellyfinToken).ToString();
     }
 }

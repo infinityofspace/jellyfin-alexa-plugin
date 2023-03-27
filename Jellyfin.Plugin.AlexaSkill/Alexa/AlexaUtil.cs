@@ -1,12 +1,6 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Alexa.NET.Management.AccountLinking;
-using Alexa.NET.Management.Skills;
-using Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
-using Jellyfin.Plugin.AlexaSkill.Api;
-using Jellyfin.Plugin.AlexaSkill.Configuration;
-using Microsoft.Extensions.Logging;
+using Jellyfin.Plugin.AlexaSkill.Entities;
+using Jellyfin.Plugin.AlexaSkill.Lwa;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa;
 
@@ -16,57 +10,41 @@ namespace Jellyfin.Plugin.AlexaSkill.Alexa;
 public static class AlexaUtil
 {
     /// <summary>
-    /// Create a new skill and update the interaction models and add the skill id to the config.
+    /// Runs a function and retries with an new access token if the first call fails. Updates the new token in the database.
     /// </summary>
-    /// <returns>Task.</returns>
-    public static async Task CreateSkill()
+    /// <typeparam name="T">The return type of the function.</typeparam>
+    /// <param name="user">The user to run the function for.</param>
+    /// <param name="func">The function to run.</param>
+    /// <returns>The result of the function.</returns>
+    public static T Call<T>(User user, Func<T> func)
     {
-        ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        ILogger logger = loggerFactory.CreateLogger<Plugin>();
-
-        logger.LogDebug("Creating a new skill...");
-
-        PluginConfiguration configuration = Plugin.Instance!.Configuration;
-
-        // create the skill in the Alxa cloud
-        SkillId skillIdObj = await Plugin.Instance.Skill.CreateSkill(configuration.VendorId).ConfigureAwait(false);
-
-        configuration.SkillId = skillIdObj.Id;
-        string skillId = skillIdObj.Id;
-        logger.LogDebug("New skill created with ID: {0}", skillId);
-
-        // wait until the skill is build
-        SkillStatus status;
-        while (true)
+        try
         {
-            status = await Plugin.Instance.SmapiManagement.Skills.Status(skillId).ConfigureAwait(false);
-            if (status.Manifest.LastModified.Status != SkillStatusState.IN_PROGRESS)
+            return func();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException)
+        {
+            if (user.SmapiDeviceToken == null)
             {
-                break;
+                throw;
             }
 
-            Thread.Sleep(1000);
+            // Refresh the token and try again
+            DeviceToken? token = LwaClient.RefreshDeviceToken(user.SmapiDeviceToken, Plugin.Instance!.Configuration.LwaClientId).Result;
+            if (token == null)
+            {
+                throw new UnauthorizedAccessException("Failed to refresh token");
+            }
+
+            user.SmapiDeviceToken = token;
+
+            Plugin.Instance.DbRepo.UpdateUser(user);
+
+            return func();
         }
-
-        Plugin.Instance.SaveConfiguration();
-
-        // now update the interaction models
-        foreach (SkillInteractionModel skillInteractionModel in Plugin.Instance.SkillInteractionModels)
+        catch (Exception ex)
         {
-            await skillInteractionModel.Update(skillId).ConfigureAwait(false);
+            throw ex;
         }
-
-        // update the account linking
-        Uri endpointUri = new Uri(new Uri(Plugin.Instance.Configuration.ServerAddress), RequestController.ApiBaseUri);
-        string endpointUriString = new Uri(endpointUri, "account-linking").ToString();
-
-        AccountLinkData accountLinkData = new AccountLinkData()
-        {
-            Type = AccountLinkType.IMPLICIT,
-            AuthorizationUrl = endpointUriString,
-            ClientId = Plugin.Instance.Configuration.AccountLinkingClientId,
-        };
-
-        await Plugin.Instance.SmapiManagement.AccountLinking.Update(skillId, accountLinkData).ConfigureAwait(false);
     }
 }

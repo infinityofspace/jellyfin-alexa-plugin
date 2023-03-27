@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
-using Alexa.NET.Management;
-using Jellyfin.Plugin.AlexaSkill.Alexa;
 using Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
 using Jellyfin.Plugin.AlexaSkill.Configuration;
+using Jellyfin.Plugin.AlexaSkill.Controller.Handler;
 using Jellyfin.Plugin.AlexaSkill.Data;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using Microsoft.Extensions.Logging;
@@ -21,22 +21,24 @@ namespace Jellyfin.Plugin.AlexaSkill;
 /// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
-    private SmapiAccessToken smapiAccessToken = new SmapiAccessToken();
-
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
     /// </summary>
     /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     /// <param name="loggerFactory">Instance of the <see cref="ILoggerFactory"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILoggerFactory loggerFactory)
-        : base(applicationPaths, xmlSerializer)
+    /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
+    public Plugin(
+        IApplicationPaths applicationPaths,
+        IXmlSerializer xmlSerializer,
+        ILoggerFactory loggerFactory,
+        IUserManager userManager) : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
 
-        DbRepo = new DbRepo($"{applicationPaths.DataPath}/{Config.DbFilePath}", loggerFactory);
+        UserManager = userManager;
 
-        SmapiManagement = new ManagementApi(smapiAccessToken.GetAccessToken);
+        DbRepo = new DbRepo($"{applicationPaths.DataPath}/{Config.DbFilePath}", loggerFactory);
 
         ILogger<Plugin> logger = loggerFactory.CreateLogger<Plugin>();
     }
@@ -58,28 +60,35 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public static HttpClient HttpClient { get; } = new HttpClient();
 
     /// <summary>
-    /// Gets the current smapi managment instance.
+    /// Gets or sets the skill manifest.
     /// </summary>
-    public ManagementApi SmapiManagement { get; private set; }
+    public ManifestSkill? ManifestSkill { get; set; }
 
     /// <summary>
-    /// Gets the skill manifest.
+    /// Gets the dictionary of device ids to session tokens.
     /// </summary>
-    public ManifestSkill Skill { get; } = new ManifestSkill("Jellyfin.Plugin.AlexaSkill.Alexa.Manifest.manifest.json");
-
-    /// <summary>
-    /// Gets the Interaction models for each supported locale.
-    /// </summary>
-    public Collection<SkillInteractionModel> SkillInteractionModels { get; } = new Collection<SkillInteractionModel>()
-    {
-        new SkillInteractionModel("Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel.model_en_US.json", "en-US"),
-        new SkillInteractionModel("Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel.model_de_DE.json", "de-DE")
-    };
+    public IUserManager UserManager { get; private set; }
 
     /// <summary>
     /// Gets the dictionary of device ids to session tokens.
     /// </summary>
     public Dictionary<string, string> SessionTokens { get; } = new Dictionary<string, string>();
+
+    /// <summary>
+    /// Gets the LWA authorization request handler.
+    /// </summary>
+    public LwaAuthorizationRequestHandler LwaAuthorizationRequestHandler { get; } =
+        new LwaAuthorizationRequestHandler();
+
+    /// <summary>
+    /// Gets the Interaction models for each supported locale.
+    /// </summary>
+    public Collection<Tuple<string, string>> InteractionModels { get; } = Util.GetLocalInteractionModels();
+
+    /// <summary>
+    /// Gets the CSRF token handler.
+    /// </summary>
+    public CsrfTokenHandler CsrfTokenHandler { get; } = new CsrfTokenHandler();
 
     /// <summary>
     /// Gets the current plugin instance.

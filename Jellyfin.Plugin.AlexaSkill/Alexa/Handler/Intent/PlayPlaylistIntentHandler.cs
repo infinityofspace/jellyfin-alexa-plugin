@@ -88,7 +88,7 @@ public class PlayPlaylistIntentHandler : BaseHandler
         BaseItem playlist = playlists.Items[0];
 
         // Get the playlist items
-        List<BaseItem> playlistItems = Playlist.GetPlaylistItems(MediaType.Audio, new[] { playlist }, _userManager.GetUserByName(user.Id), new DtoOptions(true));
+        List<BaseItem> playlistItems = Playlist.GetPlaylistItems(MediaType.Audio, new[] { playlist }, _userManager.GetUserById(user.Id), new DtoOptions(true));
 
         if (playlistItems.Count == 0)
         {

@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Alexa.NET.Management;
-using Alexa.NET.Management.Api;
-using Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
+using Jellyfin.Plugin.AlexaSkill.Entities;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.AlexaSkill.Configuration;
@@ -14,7 +15,6 @@ public class PluginConfiguration : BasePluginConfiguration
 {
     private SslCertificateType sslCertType;
     private string serverAddress;
-    private string invocationName;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PluginConfiguration"/> class.
@@ -23,12 +23,8 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         // set default options here
         sslCertType = SslCertificateType.Trusted;
-        invocationName = "jellyfin player";
-        SmapiClientId = string.Empty;
-        SmapiClientSecret = string.Empty;
-        SmapiRefreshToken = string.Empty;
-        VendorId = string.Empty;
-        SkillId = string.Empty;
+        LwaClientId = string.Empty;
+        LwaClientSecret = string.Empty;
 
         serverAddress = string.Empty;
         AccountLinkingClientId = Guid.NewGuid().ToString();
@@ -42,8 +38,16 @@ public class PluginConfiguration : BasePluginConfiguration
         get => sslCertType;
         set
         {
-            Plugin.Instance!.Skill.SetApiEndpoint(serverAddress, value);
             sslCertType = value;
+
+            if (Plugin.Instance!.ManifestSkill == null)
+            {
+                Plugin.Instance.ManifestSkill = new ManifestSkill("Jellyfin.Plugin.AlexaSkill.Alexa.Manifest.manifest.json", ServerAddress, value);
+            }
+            else
+            {
+                Plugin.Instance.ManifestSkill.SetApiEndpoint(ServerAddress, value);
+            }
         }
     }
 
@@ -55,76 +59,59 @@ public class PluginConfiguration : BasePluginConfiguration
         get => serverAddress;
         set
         {
-            Plugin.Instance!.Skill.SetApiEndpoint(value, sslCertType);
             serverAddress = value;
-        }
-    }
 
-    /// <summary>
-    /// Gets or sets the custom invocation name of the skill.
-    /// </summary>
-    public string InvocationName
-    {
-        get => invocationName;
-        set
-        {
-            foreach (SkillInteractionModel model in Plugin.Instance!.SkillInteractionModels)
+            if (Plugin.Instance!.ManifestSkill == null)
             {
-                model.InteractionModel.Language.InvocationName = value;
+                Plugin.Instance.ManifestSkill = new ManifestSkill("Jellyfin.Plugin.AlexaSkill.Alexa.Manifest.manifest.json", value, SslCertType);
             }
-
-            invocationName = value;
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets the client id for SMAPI.
-    /// </summary>
-    public string SmapiClientId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the client secret for SMAPI.
-    /// </summary>
-    public string SmapiClientSecret { get; set; }
-
-    /// <summary>
-    /// Gets or sets the refresh token for SMAPI.
-    /// </summary>
-    public string SmapiRefreshToken { get; set; }
-
-    /// <summary>
-    /// Gets or sets the vendor id of the user.
-    /// </summary>
-    public string VendorId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the id of the Alexa skill.
-    /// </summary>
-    public string SkillId { get; set; }
-
-    /// <summary>
-    /// Gets the current version of the local skill.
-    /// </summary>
-    public string SkillVersion { get => "v" + Util.GetVersion(); }
-
-    /// <summary>
-    /// Gets the current version of the skill in the Alexa cloud.
-    /// </summary>
-    public string SkillVersionCloud
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(SkillId))
+            else
             {
-                return string.Empty;
+                Plugin.Instance.ManifestSkill.SetApiEndpoint(value, SslCertType);
             }
-
-            return new ManifestSkill(Plugin.Instance!.SmapiManagement.Skills.Get(SkillId, SkillStage.Development).Result.Manifest).GetVersionTag();
         }
     }
+
+    /// <summary>
+    /// Gets or sets the client id for LWA.
+    /// </summary>
+    public string LwaClientId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the client secret for LWA.
+    /// </summary>
+    public string LwaClientSecret { get; set; }
 
     /// <summary>
     /// Gets or sets the account linking client id.
     /// </summary>
     public string AccountLinkingClientId { get; set; }
+
+    /// <summary>
+    /// Gets array if skills.
+    /// </summary>
+    public Collection<ConfigUserSkill> Skills
+    {
+        get
+        {
+            Collection<ConfigUserSkill> skills = new Collection<ConfigUserSkill>();
+            IEnumerable<User> users = Plugin.Instance!.DbRepo.GetAllUser();
+            foreach (User u in users)
+            {
+                if (u.UserSkill != null)
+                {
+                    skills.Add(new ConfigUserSkill
+                    {
+                        SkillId = u.UserSkill.SkillId ?? "NA",
+                        SkillStatus = u.UserSkill.UserSkillStatus,
+                        InvocationName = u.UserSkill.InvocationName,
+                        Username = Plugin.Instance!.UserManager.GetUserById(u.Id).Username,
+                        UserId = u.Id.ToString()
+                    });
+                }
+            }
+
+            return skills;
+        }
+    }
 }

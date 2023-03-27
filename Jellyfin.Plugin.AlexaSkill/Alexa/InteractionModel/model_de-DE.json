@@ -35,21 +35,21 @@
             {
                 "name": "LoopAllOffIntent",
                 "samples": [
-                    "Loop off"
+                    "Wiederholung aus"
                 ]
             },
             {
                 "name": "LoopAllOnIntent",
                 "samples": [
-                    "Loop on"
+                    "Wiederholung an"
                 ]
             },
             {
                 "name": "RepeatSingleOnIntent",
                 "samples": [
-                    "Repeat the song",
-                    "Repeat the video",
-                    "Repeat that"
+                    "Wiederhole den Song",
+                    "Wiederhole das Video",
+                    "Wiederhole das"
                 ]
             },
             {
@@ -61,15 +61,15 @@
             {
                 "name": "AMAZON.StartOverIntent",
                 "samples": [
-                    "Repeat from beginning",
-                    "Start over"
+                    "Starte von vorne",
+                    "Beginne erneut"
                 ]
             },
             {
                 "name": "PlayChannelIntent",
                 "samples": [
-                    "Play channel {channel}",
-                    "Play radio {channel}"
+                    "Spiele den Kanal {channel}",
+                    "Spiele das Radio {channel}"
                 ],
                 "slots": [
                     {
@@ -81,8 +81,8 @@
             {
                 "name": "PlaySongIntent",
                 "samples": [
-                    "Play the song {song}",
-                    "Play the song {song} from {musician}"
+                    "Spiele den Song {song}",
+                    "Spiele den Song {song} von {musician}"
                 ],
                 "slots": [
                     {
@@ -98,8 +98,8 @@
             {
                 "name": "PlayAlbumIntent",
                 "samples": [
-                    "Play the album {album}",
-                    "Play the album {album} by {musician}"
+                    "Spiele das Album {album}",
+                    "Spiele das Album {album} von {musician}"
                 ],
                 "slots": [
                     {
@@ -115,7 +115,7 @@
             {
                 "name": "PlayVideoIntent",
                 "samples": [
-                    "Play the video {title}"
+                    "Spiele das Video {title}"
                 ],
                 "slots": [
                     {
@@ -127,8 +127,8 @@
             {
                 "name": "PlayArtistSongsIntent",
                 "samples": [
-                    "Play songs from {musician}",
-                    "Play music from {musician}"
+                    "Spiele Songs von {musician}",
+                    "Spiele Musik von {musician}"
                 ],
                 "slots": [
                     {
@@ -140,10 +140,10 @@
             {
                 "name": "PlayLastAddedIntent",
                 "samples": [
-                    "Play last added {media_type}",
-                    "Play recently added {media_type}",
-                    "Play newly added {media_type}",
-                    "Play new media"
+                    "Spiele zuletzt hinzugefügte {media_type}",
+                    "Spiele neu hinzugefügte {media_type}",
+                    "Spiele neue {media_type}",
+                    "Spiele neue Medien"
                 ],
                 "slots": [
                     {
@@ -155,8 +155,8 @@
             {
                 "name": "PlayPlaylistIntent",
                 "samples": [
-                    "Play the playlist {playlist}",
-                    "Play my playlist {playlist}"
+                    "Spiele die Playlist {playlist}",
+                    "Spiele meine Playlist {playlist}"
                 ],
                 "slots": [
                         {
@@ -168,9 +168,9 @@
             {
                 "name": "PlayFavoritesIntent",
                 "samples": [
-                    "Play my favorite {media_type}",
-                    "Play my {media_type} favorite",
-                    "Play my favorites"
+                    "Spiele meine lieblings {media_type}",
+                    "Spiele meine {media_type} Favoriten",
+                    "Spiele meine Favoriten"
                 ],
                 "slots": [
                     {
@@ -182,35 +182,35 @@
             {
                 "name": "MarkFavoriteIntent",
                 "samples": [
-                    "I like that",
-                    "I like the video",
-                    "I like the song",
-                    "I like the music",
-                    "Add the video to my favorites",
-                    "Add the song to my favorites"
+                    "Ich mag das",
+                    "Ich mag das Video",
+                    "Ich mag den Song",
+                    "Ich mag die Musik",
+                    "Füge das Video zu meinen Favoriten hinzu",
+                    "Füge den Song zu meinen Favoriten hinzu"
                 ]
             },
             {
                 "name": "UnmarkFavoriteIntent",
                 "samples": [
-                    "I don't like this",
-                    "I don't like the video",
-                    "I don't like song",
-                    "I don't like music",
-                    "Remove the video from my favorites",
-                    "Remove the song from my favorites"
+                    "Ich mag das nicht",
+                    "Ich mag das Video nicht",
+                    "Ich mag den Song nicht",
+                    "Ich mag die Musik nicht",
+                    "Entferne das Video von meinen Favoriten",
+                    "Entferne den Song von meinen Favoriten"
                 ]
             },
             {
                 "name": "MediaInfoIntent",
                 "samples": [
-                    "What is the name of the song",
-                    "What is the name of the video",
-                    "What is the name of the music",
-                    "What is the title of the song",
-                    "What is the title of the video",
-                    "What is the title of the music",
-                    "What is currently playing"
+                    "Wie heißt der Song",
+                    "Wie heißt das Video",
+                    "Wie heißt die Musik",
+                    "Was ist der Titel des Songs",
+                    "Was ist der Titel des Videos",
+                    "Was ist der Titel der Musik",
+                    "Was spielt gerade"
                 ]
             }
         ],
@@ -245,4 +245,3 @@
         ]
     }
 }
-  

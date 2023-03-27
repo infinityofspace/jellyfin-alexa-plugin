@@ -1,17 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Alexa.NET.Management.AccountLinking;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
-using Jellyfin.Plugin.AlexaSkill.Alexa;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
-using Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
-using Jellyfin.Plugin.AlexaSkill.Configuration;
+using Jellyfin.Plugin.AlexaSkill.Controller.Handler;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
@@ -20,36 +14,36 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Jellyfin.Plugin.AlexaSkill.Api;
+namespace Jellyfin.Plugin.AlexaSkill.Controller;
 
 /// <summary>
 /// Controller class for api requests.
 /// </summary>
 [ApiController]
-[Route("AlexaSkill/api/")]
-public class RequestController : ControllerBase
+[Route("alexaskill/api/")]
+public class AlexaSkillController : ControllerBase
 {
     /// <summary>
     /// Uri of the plugin api.
     /// </summary>
-    public const string ApiBaseUri = "AlexaSkill/api/";
+    public const string ApiBaseUri = "alexaskill/api/";
 
     private readonly IUserManager _userManager;
     private readonly ISessionManager _sessionManager;
-    private readonly ILogger<RequestController> _logger;
-
-    private static Dictionary<string, CsrfToken> csrfTokens = new Dictionary<string, CsrfToken>();
+    private readonly ILogger<AlexaSkillController> _logger;
 
     private BaseHandler[] handler;
 
+    private CsrfTokenHandler csrfTokenHandler;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="RequestController"/> class.
+    /// Initializes a new instance of the <see cref="AlexaSkillController"/> class.
     /// </summary>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="sessionManager">Instance of the <see cref="ISessionManager"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
     /// <param name="loggerFactory">Instance of the <see cref="ILogger{RequestController}"/> interface.</param>
-    public RequestController(
+    public AlexaSkillController(
         IUserManager userManager,
         ISessionManager sessionManager,
         ILibraryManager libraryManager,
@@ -57,7 +51,9 @@ public class RequestController : ControllerBase
     {
         _userManager = userManager;
         _sessionManager = sessionManager;
-        _logger = loggerFactory.CreateLogger<RequestController>();
+        _logger = loggerFactory.CreateLogger<AlexaSkillController>();
+
+        csrfTokenHandler = Plugin.Instance!.CsrfTokenHandler;
 
         handler = new BaseHandler[]
         {
@@ -124,7 +120,7 @@ public class RequestController : ControllerBase
         }
 
         var assembly = typeof(Util).Assembly;
-        Stream? resource = assembly.GetManifestResourceStream("Jellyfin.Plugin.AlexaSkill.Api.Pages.account_linking.html");
+        Stream? resource = assembly.GetManifestResourceStream("Jellyfin.Plugin.AlexaSkill.Controller.Pages.account_linking.html");
 
         if (resource == null)
         {
@@ -133,7 +129,7 @@ public class RequestController : ControllerBase
 
         string page = new StreamReader(resource).ReadToEnd();
 
-        page = page.Replace("{{ csrf_token }}", GetNewCsrfToken(), StringComparison.Ordinal);
+        page = page.Replace("{{ csrf_token }}", csrfTokenHandler.GetNewCsrfToken().Token, StringComparison.Ordinal);
 
         if (error != null)
         {
@@ -166,7 +162,7 @@ public class RequestController : ControllerBase
         [FromQuery(Name = "redirect_uri")] string redirectUri,
         [FromQuery(Name = "state")] string state)
     {
-        if (!csrfTokens.ContainsKey(csrfToken))
+        if (!csrfTokenHandler.ValidateCsrfToken(csrfToken))
         {
             return Unauthorized();
         }
@@ -221,9 +217,16 @@ public class RequestController : ControllerBase
             return Redirect("account-linking?error=unknown error&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&state=" + state);
         }
 
-        Entities.User user = Plugin.Instance!.DbRepo.CreateUser(username, authenticationResult.AccessToken);
+        Entities.User? user = Plugin.Instance.DbRepo.GetUser(authenticationResult.User.Id);
+        if (user == null)
+        {
+            return Redirect("account-linking?error=this user have no user skill&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&state=" + state);
+        }
 
-        string accessToken = user.Token;
+        user.JellyfinToken = authenticationResult.AccessToken;
+        Plugin.Instance!.DbRepo.UpdateUser(user);
+
+        string accessToken = user.JellyfinToken;
 
         string urlParams = $"access_token={accessToken}&state={state}&token_type=token";
 
@@ -283,101 +286,6 @@ public class RequestController : ControllerBase
     }
 
     /// <summary>
-    /// Rebuild the skill in the Alexa cloud.
-    /// </summary>
-    /// <returns>A <see cref="ActionResult"/>.</returns>
-    [HttpPatch("skill-rebuild")]
-    [Authorize(Policy = "RequiresElevation")]
-    public async Task<ActionResult> RebuildSkill()
-    {
-        PluginConfiguration configuration = Plugin.Instance!.Configuration;
-
-        string skillId = configuration.SkillId;
-
-        // check if we already have an active skill in the Alexa cloud
-        if (string.IsNullOrEmpty(skillId))
-        {
-            // check if we can create a new skill
-
-            // check if all credentials and tokens are available
-            if (string.IsNullOrEmpty(configuration.SmapiClientId)
-                || string.IsNullOrEmpty(configuration.SmapiClientSecret)
-                || string.IsNullOrEmpty(configuration.SmapiRefreshToken)
-                || string.IsNullOrEmpty(configuration.VendorId)
-                || string.IsNullOrEmpty(configuration.ServerAddress))
-            {
-                _logger.LogInformation("Missing skill config value to create a new skill");
-                // we don't have a skill active skill in the Alexa cloud and we have some required skill config values
-                return new BadRequestResult();
-            }
-            else
-            {
-                try
-                {
-                    await AlexaUtil.CreateSkill().ConfigureAwait(false);
-                }
-                catch (Exception ex) when (ex is HttpRequestException || ex is UnauthorizedAccessException || ex is JsonException)
-                {
-                    _logger.LogError("Failed to create the skill", ex.Message);
-                    return StatusCode(500);
-                }
-
-                return new OkResult();
-            }
-        }
-        else
-        {
-            _logger.LogInformation("Update the existing skill with ID: {0}", skillId);
-            // update the existing skill in the alexa cloud
-            try
-            {
-                await Plugin.Instance.Skill.Update(skillId).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || ex is UnauthorizedAccessException || ex is JsonException)
-            {
-                _logger.LogError("Failed to update existing skill manifest: {0}", ex.Message);
-                return StatusCode(500);
-            }
-
-            try
-            {
-                // now update the interaction models
-                foreach (SkillInteractionModel skillInteractionModel in Plugin.Instance.SkillInteractionModels)
-                {
-                    await skillInteractionModel.Update(skillId).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex) when (ex is HttpRequestException || ex is UnauthorizedAccessException || ex is JsonException)
-            {
-                _logger.LogError("Failed to update existing skill interaction: {0}", ex.Message);
-                return StatusCode(500);
-            }
-
-            try
-            {
-                Uri endpointUri = new Uri(new Uri(Plugin.Instance.Configuration.ServerAddress), RequestController.ApiBaseUri);
-                string endpointUriString = new Uri(endpointUri, "account-linking").ToString();
-
-                AccountLinkData accountLinkData = new AccountLinkData()
-                {
-                    Type = AccountLinkType.IMPLICIT,
-                    AuthorizationUrl = endpointUriString,
-                    ClientId = Plugin.Instance.Configuration.AccountLinkingClientId,
-                };
-
-                await Plugin.Instance.SmapiManagement.AccountLinking.Update(skillId, accountLinkData).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || ex is UnauthorizedAccessException || ex is JsonException)
-            {
-                _logger.LogError("Failed to update account liniking: {0}", ex.Message);
-                return StatusCode(500);
-            }
-
-            return new OkResult();
-        }
-    }
-
-    /// <summary>
     /// Delete the whole skill database.
     /// </summary>
     /// <returns>A <see cref="ActionResult"/>.</returns>
@@ -388,68 +296,5 @@ public class RequestController : ControllerBase
         Plugin.Instance!.DbRepo.DeleteDatabase();
 
         return new OkResult();
-    }
-
-    private void RemoveExpiredCsrfTokens()
-    {
-        // iter over all csrf tokens and remove the expired ones
-        foreach (KeyValuePair<string, CsrfToken> csrfToken in csrfTokens)
-        {
-            if (csrfToken.Value.Expiration > DateTime.Now)
-            {
-                csrfTokens.Remove(csrfToken.Key);
-            }
-        }
-    }
-
-    private bool ValidateCsrfToken(string token)
-    {
-        CsrfToken? csfrToken;
-        if (csrfTokens.TryGetValue(token, out csfrToken))
-        {
-            return false;
-        }
-
-        // validate expiration
-        if (csfrToken!.Expiration < DateTime.UtcNow)
-        {
-            return true;
-        }
-        else
-        {
-            csrfTokens.Remove(token);
-
-            RemoveExpiredCsrfTokens();
-
-            return false;
-        }
-    }
-
-    private string GetNewCsrfToken()
-    {
-        CsrfToken csfrToken;
-
-        while (true)
-        {
-            try
-            {
-                csfrToken = new CsrfToken();
-                csrfTokens.Add(csfrToken.Token, csfrToken);
-                break;
-            }
-            catch (System.ArgumentException)
-            {
-                continue;
-            }
-        }
-
-        return csfrToken.Token;
-    }
-
-    private class CsrfToken
-    {
-        public string Token { get; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(Config.CsrfTokenLength));
-
-        public DateTime Expiration { get; } = DateTime.UtcNow.AddMinutes(Config.CsrfTokenExpirationMinutes);
     }
 }

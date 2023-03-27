@@ -11,7 +11,12 @@ public static class Config
     public const string SkillName = "Jellyfin";
 
     /// <summary>
-    /// Lenght of the CSRF token.
+    /// The default invocation name of the Alexa skill.
+    /// </summary>
+    public const string InvocationName = "jellyfin player";
+
+    /// <summary>
+    /// Length of the CSRF token.
     /// </summary>
     public const int CsrfTokenLength = 1024;
 
@@ -19,6 +24,16 @@ public static class Config
     /// Expiration time of the CSRF token in minutes.
     /// </summary>
     public const int CsrfTokenExpirationMinutes = 10;
+
+    /// <summary>
+    /// Length of the LWA authorization page token.
+    /// </summary>
+    public const int LwaAuthorizePageTokenLength = 6;
+
+    /// <summary>
+    /// Expiration time of the CSRF token in minutes.
+    /// </summary>
+    public const int LwaAuthorizePageTokenExpirationMinutes = 10;
 
     /// <summary>
     /// Name of the database file.

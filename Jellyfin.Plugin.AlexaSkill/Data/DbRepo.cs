@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Jellyfin.Plugin.AlexaSkill.Entities;
 using LiteDB;
 using Microsoft.Extensions.Logging;
@@ -32,15 +33,17 @@ public class DbRepo : IDisposable
     /// </summary>
     /// <param name="userId">The user id of the user to create.</param>
     /// <param name="token">The auth token to interact with the Jellyfin server api.</param>
+    /// <param name="userSkill">The user skill linked to the jellyfin account.</param>
     /// <returns>Instance of the <see cref="User"/> class.</returns>
-    public User CreateUser(string userId, string token)
+    public User CreateUser(Guid userId, string token, UserSkill userSkill)
     {
         _logger.LogDebug("Creating user with id {0}", userId);
 
         var user = new User
         {
             Id = userId,
-            Token = token
+            JellyfinToken = token,
+            UserSkill = userSkill
         };
         _liteDb.GetCollection<User>("users").Insert(user);
 
@@ -48,11 +51,33 @@ public class DbRepo : IDisposable
     }
 
     /// <summary>
+    /// Update a user in the database.
+    /// </summary>
+    /// <param name="user">The user to update.</param>
+    public void UpdateUser(User user)
+    {
+        _logger.LogDebug("Updating user with id {0}", user.Id);
+
+        _liteDb.GetCollection<User>("users").Update(user);
+    }
+
+    /// <summary>
+    /// Get all user from the database.
+    /// </summary>
+    /// <returns>Enumerable of all <see cref="User"/> class instances.</returns>
+    public IEnumerable<User> GetAllUser()
+    {
+        _logger.LogDebug("Get all user");
+
+        return _liteDb.GetCollection<User>("users").FindAll();
+    }
+
+    /// <summary>
     /// Get a user from the database.
     /// </summary>
     /// <param name="userId">Id of the user to get.</param>
     /// <returns>The <see cref="User"/> class instance or null if not found.</returns>
-    public User? GetUser(string userId)
+    public User? GetUser(Guid userId)
     {
         _logger.LogDebug("Get user with id {0}", userId);
 
@@ -62,20 +87,32 @@ public class DbRepo : IDisposable
     /// <summary>
     /// Get a user by its skill auth token.
     /// </summary>
-    /// <param name="accessToken">Skill auth token.</param>
+    /// <param name="token">Jellyfin API auth token.</param>
     /// <returns>The <see cref="User"/> class instance or null if not found.</returns>
-    public User? GetUserByToken(string accessToken)
+    public User? GetUserByToken(string token)
     {
-        _logger.LogDebug("Get user with access token {0}", accessToken);
+        _logger.LogDebug("Get user with access token {0}", token);
 
-        return _liteDb.GetCollection<User>("users").FindOne(x => x.Token == accessToken);
+        return _liteDb.GetCollection<User>("users").FindOne(x => x.JellyfinToken == token);
+    }
+
+    /// <summary>
+    /// Get a user by its skill auth token.
+    /// </summary>
+    /// <param name="skillId">Alexa Skill id.</param>
+    /// <returns>The <see cref="User"/> class instance or null if not found.</returns>
+    public User? GetUserBySkilId(string skillId)
+    {
+        _logger.LogDebug("Get user with skill id {0}", skillId);
+
+        return _liteDb.GetCollection<User>("users").FindOne(x => x.UserSkill.SkillId == skillId);
     }
 
     /// <summary>
     /// Delete a user by its id.
     /// </summary>
     /// <param name="userId">The id of the user.</param>
-    public void DeleteUser(string userId)
+    public void DeleteUser(Guid userId)
     {
         User user = _liteDb.GetCollection<User>("users").FindOne(x => x.Id == userId);
         _liteDb.GetCollection<User>("users").Delete(user.Id);
