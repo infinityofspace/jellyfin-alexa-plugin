@@ -2,7 +2,7 @@ using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
-using Jellyfin.Plugin.AlexaSkill.Data;
+using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
 
@@ -17,9 +17,9 @@ public class ExceptionHandler : BaseHandler
     /// Initializes a new instance of the <see cref="ExceptionHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Session manager instance.</param>
-    /// <param name="dbRepo">The database repository instance.</param>
+    /// <param name="config">The plugin configuration.</param>
     /// <param name="loggerFactory">Logger factory instance.</param>
-    public ExceptionHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+    public ExceptionHandler(ISessionManager sessionManager, PluginConfiguration config, ILoggerFactory loggerFactory) : base(sessionManager, config, loggerFactory)
     {
     }
 

@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
-using Jellyfin.Plugin.AlexaSkill.Alexa.InteractionModel;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
 using Jellyfin.Plugin.AlexaSkill.Configuration;
 using Jellyfin.Plugin.AlexaSkill.Controller.Handler;
-using Jellyfin.Plugin.AlexaSkill.Data;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Controller.Library;
@@ -38,8 +36,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         UserManager = userManager;
 
-        DbRepo = new DbRepo($"{applicationPaths.DataPath}/{Config.DbFilePath}", loggerFactory);
-
         ILogger<Plugin> logger = loggerFactory.CreateLogger<Plugin>();
     }
 
@@ -48,11 +44,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
     /// <inheritdoc />
     public override Guid Id => Guid.Parse("c5df7de0-8777-4b3c-a70d-5c3dae359c9e");
-
-    /// <summary>
-    /// Gets the database for persistent skill data.
-    /// </summary>
-    public DbRepo DbRepo { get; private set; }
 
     /// <summary>
     /// Gets the http client.

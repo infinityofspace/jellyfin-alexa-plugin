@@ -3,7 +3,7 @@ using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
-using Jellyfin.Plugin.AlexaSkill.Data;
+using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
 
@@ -14,18 +14,18 @@ namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
 /// </summary>
 public abstract class BaseHandler
 {
-    private DbRepo _dbRepo;
+    private PluginConfiguration _config;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">The session manager instance.</param>
-    /// <param name="dbRepo">The database repository instance.</param>
+    /// <param name="config">The plugin configuration.</param>
     /// <param name="loggerFactory">The logger factory instance.</param>
-    protected BaseHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory)
+    protected BaseHandler(ISessionManager sessionManager, PluginConfiguration config, ILoggerFactory loggerFactory)
     {
         SessionManager = sessionManager;
-        _dbRepo = dbRepo;
+        _config = config;
         Logger = loggerFactory.CreateLogger<BaseHandler>();
     }
 
@@ -47,9 +47,9 @@ public abstract class BaseHandler
     /// <returns>The skill response to the request.</returns>
     public SkillResponse HandleRequest(Request request, Context context)
     {
-        string token = context.System.User.AccessToken;
+        Guid userId = new Guid(context.System.User.AccessToken);
 
-        Entities.User? user = _dbRepo.GetUserByToken(token);
+        Entities.User? user = _config.GetUserById(userId);
         if (user == null)
         {
             Logger.LogError("User not found");
@@ -57,7 +57,7 @@ public abstract class BaseHandler
             return ResponseBuilder.Tell("User not found. Please relink your account.");
         }
 
-        SessionInfo session = SessionManager.GetSessionByAuthenticationToken(token, context.System.Device.DeviceID, Plugin.Instance!.Configuration.ServerAddress).Result;
+        SessionInfo session = SessionManager.GetSessionByAuthenticationToken(user.JellyfinToken, context.System.Device.DeviceID, Plugin.Instance!.Configuration.ServerAddress).Result;
 
         return Handle(request, context, user, session);
     }

@@ -143,7 +143,7 @@ public class LWAController : ControllerBase
                             {
                                 _logger.LogError("Could not get lwa device token");
                                 return;
-                            }                           
+                            }
                         }
                         catch (Exception e)
                         {
@@ -153,7 +153,7 @@ public class LWAController : ControllerBase
 
                          // update the user
                         Jellyfin.Plugin.AlexaSkill.Entities.User? user =
-                        Plugin.Instance!.DbRepo.GetUser(lwaAuthorizationRequest.UserId);
+                        Plugin.Instance!.Configuration.GetUserById(lwaAuthorizationRequest.UserId);
                         if (user == null)
                         {
                             _logger.LogError("Could not find user");
@@ -161,8 +161,13 @@ public class LWAController : ControllerBase
                         }
 
                         user.SmapiDeviceToken = deviceToken;
+                        if (user.UserSkill == null)
+                        {
+                            user.UserSkill = new UserSkill { InvocationName = Config.InvocationName };
+                        }
+
                         user.UserSkill.UserSkillStatus = UserSkillStatus.SkillCreating;
-                        Plugin.Instance!.DbRepo.UpdateUser(user);
+                        Plugin.Instance!.SaveConfiguration();
                         lwaAuthorizationRequestHandler.RemoveLwaAuthorizeRequest(token);
 
                         // create the skill
@@ -192,7 +197,7 @@ public class LWAController : ControllerBase
 
                             user.UserSkill.SkillId = skillId;
                             user.UserSkill.UserSkillStatus = UserSkillStatus.AccountLinkPending;
-                            Plugin.Instance!.DbRepo.UpdateUser(user);
+                            Plugin.Instance!.SaveConfiguration();
                         }
                     });
 

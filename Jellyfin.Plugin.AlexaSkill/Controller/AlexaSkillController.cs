@@ -9,7 +9,6 @@ using Jellyfin.Plugin.AlexaSkill.Controller.Handler;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -57,26 +56,26 @@ public class AlexaSkillController : ControllerBase
 
         handler = new BaseHandler[]
         {
-            new LaunchRequestHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+            new LaunchRequestHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, loggerFactory),
 
-            new PlayIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
-            new PauseIntentHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory),
-            new NextIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
-            new PreviousIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
-            new ResumeIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, loggerFactory),
+            new PlayIntentHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory),
+            new PauseIntentHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory),
+            new NextIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, loggerFactory),
+            new PreviousIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, loggerFactory),
+            new ResumeIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, loggerFactory),
 
-            new PlayLastAddedIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
+            new PlayLastAddedIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
 
-            new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlaybackNearlyFinishedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlaybackStartedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new PlaybackStoppedEventHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
-            new SessionEndedRequestHandler(sessionManager, Plugin.Instance!.DbRepo, libraryManager, userManager, loggerFactory),
+            new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlaybackNearlyFinishedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlaybackStartedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlaybackStoppedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new SessionEndedRequestHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
 
-            new ExceptionHandler(sessionManager, Plugin.Instance!.DbRepo, loggerFactory)
+            new ExceptionHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory)
         };
     }
 
@@ -217,18 +216,16 @@ public class AlexaSkillController : ControllerBase
             return Redirect("account-linking?error=unknown error&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&state=" + state);
         }
 
-        Entities.User? user = Plugin.Instance.DbRepo.GetUser(authenticationResult.User.Id);
+        Entities.User? user = Plugin.Instance.Configuration.GetUserById(authenticationResult.User.Id);
         if (user == null)
         {
             return Redirect("account-linking?error=this user have no user skill&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&state=" + state);
         }
 
         user.JellyfinToken = authenticationResult.AccessToken;
-        Plugin.Instance!.DbRepo.UpdateUser(user);
+        Plugin.Instance!.SaveConfiguration();
 
-        string accessToken = user.JellyfinToken;
-
-        string urlParams = $"access_token={accessToken}&state={state}&token_type=token";
+        string urlParams = $"access_token={user.Id.ToString()}&state={state}&token_type=token";
 
         return RedirectPermanent(redirectUri + "#" + urlParams);
     }
@@ -244,11 +241,11 @@ public class AlexaSkillController : ControllerBase
     {
         SkillRequest req = JsonConvert.DeserializeObject<SkillRequest>(json.ToString());
 
-        string accessToken = req.Context.System.User.AccessToken;
-        Entities.User? user = Plugin.Instance!.DbRepo.GetUserByToken(accessToken);
+        Guid userId = new Guid(req.Context.System.User.AccessToken);
+        Entities.User? user = Plugin.Instance!.Configuration.GetUserById(userId);
         if (user == null)
         {
-            _logger.LogError("User not found or invalid access token: {0}", accessToken);
+            _logger.LogError("User not found or invalid access token: {0}", userId);
 
             return Unauthorized();
         }
@@ -283,18 +280,5 @@ public class AlexaSkillController : ControllerBase
         }
 
         return new BadRequestResult();
-    }
-
-    /// <summary>
-    /// Delete the whole skill database.
-    /// </summary>
-    /// <returns>A <see cref="ActionResult"/>.</returns>
-    [HttpDelete("database")]
-    [Authorize(Policy = "RequiresElevation")]
-    public ActionResult DeleteDatabase()
-    {
-        Plugin.Instance!.DbRepo.DeleteDatabase();
-
-        return new OkResult();
     }
 }

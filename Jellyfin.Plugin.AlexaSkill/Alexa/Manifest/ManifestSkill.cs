@@ -99,7 +99,7 @@ public class ManifestSkill : Skill
         if (baseLocale != null)
         {
             string[] split = baseLocale.Name.Split(" ");
-            return split[split.Length - 1].Replace("v", "");
+            return split[split.Length - 1].Replace("v", string.Empty, StringComparison.OrdinalIgnoreCase);
         }
         else
         {

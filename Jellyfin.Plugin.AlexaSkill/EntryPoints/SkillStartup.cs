@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -95,16 +94,12 @@ public class SkillStartup : IServerEntryPoint
         ManifestSkill manifestSkill = new ManifestSkill("Jellyfin.Plugin.AlexaSkill.Alexa.Manifest.manifest.json", configuration.ServerAddress, configuration.SslCertType);
         Plugin.Instance.ManifestSkill = manifestSkill;
 
-        // check all skills of each user, if the skill is created or the cloud model is outdated
-        Plugin plugin = Plugin.Instance;
-        IEnumerable<User> users = plugin.DbRepo.GetAllUser();
-
         Uri endpointUri = new Uri(new Uri(configuration.ServerAddress), AlexaSkillController.ApiBaseUri);
         string endpointUriString = new Uri(endpointUri, "account-linking").ToString();
 
         await Task.Run(() =>
         {
-            foreach (User user in users)
+            foreach (User user in configuration.Users)
             {
                 if (user.UserSkill != null)
                 {
@@ -154,7 +149,6 @@ public class SkillStartup : IServerEntryPoint
                     else if (user.SmapiManagement != null)
                     {
                         user.UserSkill.UserSkillStatus = UserSkillStatus.SkillCreating;
-                        plugin.DbRepo.UpdateUser(user);
 
                         // create the skill in the cloud
                         _logger.LogInformation("Skill for user with id {0} is not created in the cloud. Creating...", user.Id);
@@ -166,7 +160,7 @@ public class SkillStartup : IServerEntryPoint
 
                         user.UserSkill.SkillId = skillId;
                         user.UserSkill.UserSkillStatus = UserSkillStatus.AccountLinkPending;
-                        plugin.DbRepo.UpdateUser(user);
+                        Plugin.Instance.SaveConfiguration();
                     }
                 }
             }

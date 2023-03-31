@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
-using Alexa.NET.Management.Manifest;
-using Alexa.NET.Management.Skills;
 using Jellyfin.Plugin.AlexaSkill.Exceptions;
 using Newtonsoft.Json;
 

@@ -5,6 +5,14 @@ namespace Jellyfin.Plugin.AlexaSkill.Lwa;
 /// </summary>
 public class DeviceToken
 {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeviceToken"/> class.
+    /// </summary>
+    public DeviceToken()
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DeviceToken"/> class.
     /// </summary>

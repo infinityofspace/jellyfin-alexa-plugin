@@ -17,7 +17,7 @@
                 </div>
 
                 <div class="verticalSection">
-                    <h2 class="sectionTitle">Configuration</h2>
+                    <h2 class="sectionTitle">General Configuration</h2>
 
                     <form id="ConfigForm" method="post">
                         <div class="inputContainer">
@@ -25,6 +25,7 @@
                             <input id="ServerAddress" name="ServerAddress" type="text" is="emby-input" />
                             <div class="fieldDescription">The public accessable https address of this server.</div>
                         </div>
+
                         <div class="selectContainer">
                             <label class="selectLabel" for="SslCertType">SSL Certificate Type</label>
                             <select is="emby-select" id="SslCertType" name="SslCertType" class="emby-select-withcolor emby-select">
@@ -33,28 +34,19 @@
                                 <option id="selfSigned" value="SelfSigned">SelfSigned</option>
                             </select>
                         </div>
+
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="LwaClientId">LWA Client ID</label>
                             <input id="LwaClientId" name="LwaClientId" type="text" is="emby-input" />
                             <div class="fieldDescription">The LWA client ID to authorize SMAPI requests.</div>
                         </div>
+
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="LwaClientSecret">SMAPI Client Secret</label>
                             <input id="LwaClientSecret" name="LwaClientSecret" type="text" is="emby-input" />
                             <div class="fieldDescription">The LWA client secret to authorize SMAPI requests.</div>
                         </div>
-                        <div>
-                            <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                                <span>Save</span>
-                            </button>
-                        </div>
                     </form>
-
-                    <div class="readOnlyContent">
-                        <button id="deleteSkillDatabaseButton" is="emby-button" class="raised block emby-button">
-                            <span>Delete skill database</span>
-                        </button>
-                    </div>
                 </div>
 
                 <div class="detailSectionHeader">
@@ -76,161 +68,268 @@
                                 <th scope="col" class="detailTableHeaderCell">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="resultBody"></tbody>
+                        <tbody id="userTableBody"></tbody>
                     </table>
+                </div>
+
+                <div class="readOnlyContent" style="padding-top: 6em;">
+                    <div>
+                        <button id="saveConfigButton" is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         <script type="text/javascript">
             var Config = {
-                pluginUniqueId: 'c5df7de0-8777-4b3c-a70d-5c3dae359c9e'
+                pluginUniqueId: "c5df7de0-8777-4b3c-a70d-5c3dae359c9e"
             };
 
-            document.querySelector('#ConfigPage').addEventListener('pageshow', function() {
+            document.querySelector("#ConfigPage").addEventListener("pageshow", function() {
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(Config.pluginUniqueId).then(function (config) {
-                    document.querySelector('#ServerAddress').value = config.ServerAddress;
-                    document.querySelector('#SslCertType').value = config.SslCertType;
+                    document.querySelector("#ServerAddress").value = config.ServerAddress;
+                    document.querySelector("#SslCertType").value = config.SslCertType;
 
-                    document.querySelector('#LwaClientId').value = config.LwaClientId;
-                    document.querySelector('#LwaClientSecret').value = config.LwaClientSecret;
+                    document.querySelector("#LwaClientId").value = config.LwaClientId;
+                    document.querySelector("#LwaClientSecret").value = config.LwaClientSecret;
 
-                    fillUserSkillsTable(config);
+                    for (let user of config.Users) {
+                        document.querySelector("#userTableBody").appendChild(createUserRow(user, config));
+                    }
 
                     Dashboard.hideLoadingMsg();
                 });    
             });
 
-            function reload() {
-                location.reload();
-                //Dashboard.showLoadingMsg();
-                //Dashboard.hideLoadingMsg();
-            }
+            function createUserRow(user, config) {
+                let tr = document.createElement("tr");
+                tr.setAttribute("data-id", user.Id);
+                tr.classList.add("detailTableBodyRow");
+                tr.classList.add("detailTableBodyRow-shaded");
 
-            function fillUserSkillsTable(config) {
-                const rows = config.Skills.map(function (item) {
-                    let html = '';
-                    html += '<tr class="detailTableBodyRow detailTableBodyRow-shaded">';
+                let td = document.createElement("td");
+                td.setAttribute("data-id", user.Id);
+                td.classList.add("detailTableBodyCell");
+                td.style.verticalAlign = "middle";
+                td.innerHTML = user.Username;
+                tr.appendChild(td);
 
-                    html += '<td class="detailTableBodyCell" style="vertical-align:middle;">';
-                    html += item.Username;
-                    html += '</td>';
+                td = document.createElement("td");
+                td.setAttribute("data-id", user.Id);
+                td.classList.add("detailTableBodyCell");
+                td.style.verticalAlign = "middle";
+                td.innerHTML = (user.UserSkill)? user.UserSkill.SkillId : undefined;
+                tr.appendChild(td);
 
-                    html += '<td class="detailTableBodyCell" style="vertical-align:middle;">';
-                    html += item.SkillId;
-                    html += '</td>';
+                td = document.createElement("td");
+                td.classList.add("detailTableBodyCell");
+                td.style.verticalAlign = "middle";
+                let input = document.createElement("input");
+                input.setAttribute("data-id", user.Id);
+                input.name = "LwaClientSecret";
+                input.type = "text";
+                input.is = "emby-input";
+                input.classList.add("emby-input")
+                input.value = (user.UserSkill)? user.UserSkill.InvocationName : "jellyfin player";
+                td.appendChild(input);
+                tr.appendChild(td);
+                
+                td = document.createElement("td");
+                td.setAttribute("data-id", user.Id);
+                td.classList.add("detailTableBodyCell");
+                td.style.verticalAlign = "middle";
+                td.innerHTML = (user.UserSkill)? user.UserSkill.UserSkillStatus : "unsaved";
+                tr.appendChild(td);
+                
+                tdDetailTableBodyCell = document.createElement("td");
+                tdDetailTableBodyCell.classList.add("detailTableBodyCell");
+                let deleteButton = document.createElement("button");
+                deleteButton.setAttribute("data-id", user.Id);
+                deleteButton.type = "button";
+                deleteButton.is = "emby-button";
+                deleteButton.setAttribute("action-type", "edit");
+                deleteButton.classList.add("raised");
+                deleteButton.classList.add("raised-mini");
+                deleteButton.classList.add("emby-button");
+                deleteButton.setAttribute("data-mini", "true");
+                deleteButton.title = "Delete";
+                deleteButton.innerHTML = "Delete";
+                deleteButton.addEventListener("click", e => {
+                    Dashboard.showLoadingMsg();
 
-                    html += '<td class="detailTableBodyCell" style="vertical-align:middle;">';
-                    html += '<input id="invocationNameInput-' + item.UserId + '" name="LwaClientSecret" type="text" disabled=true is="emby-input" value="' + item.InvocationName + '"/>';
-                    html += '</td>';                    
+                    const userId = event.target.getAttribute("data-id");
 
-                    html += '<td class="detailTableBodyCell" style="vertical-align:middle;">';
-                    html += item.SkillStatus;
-                    html += '</td>';
+                    // get parent row
+                    const row = e.target.closest("tr");
 
-                    html += '<td class="detailTableBodyCell">';
-                    html += '<button type="button" is="emby-button" action-type="edit" data-id="' + item.UserId + '" class="raised raised-mini btnEditUserSkill" data-mini="true" title="Edit">Edit</button>';
-                    html += '<button type="button" is="emby-button" action-type="edit" data-id="' + item.UserId + '" class="raised raised-mini btnDeleteUserSkill" data-mini="true" title="Delete">Delete</button>';
-                    if (item.SkillStatus == 'LwaAuthPending' && config.ServerAddress != '' && config.LwaClientId != '' && config.LwaClientSecret != '') {
-                        html += '<button type="button" is="emby-button" action-type="authorize" data-id="' + item.UserId + '" class="raised raised-mini btnAuthorizeUserSkill" data-mini="true" title="Authorize">Authorize</button>';
+                    if (userId === "undefined") {
+                        // just delete the row without calling the API
+                        document.querySelector("#userTableBody").deleteRow(row.rowIndex - 1);
+                        Dashboard.hideLoadingMsg();
+                        return;
                     }
-                    html += '</td>';
-
-                    html += '</tr>';
-
-                    return html;
-                }).join('');
-                document.querySelector('#resultBody').innerHTML = rows;
-
-                document.querySelectorAll('.btnEditUserSkill').forEach(i => i.addEventListener('click', e => {
-                    const dataId = event.target.getAttribute('data-id');
-                    const invocationNameInput = document.querySelector('#invocationNameInput-' + dataId);
-
-                    if (event.target.getAttribute('action-type') == 'edit') {
-                        invocationNameInput.disabled = false;
-                        invocationNameInput.focus();
-
-                        event.target.innerHTML = 'Save'
-                        event.target.setAttribute('action-type', 'save')
-                    } else {
-                        invocationNameInput.value = invocationNameInput.value.toLowerCase();
-
-                        if (invocationNameInput.value.split(" ").length < 2) {
-                            Dashboard.alert('The invocation name must be at least 2 words.');
-                            return;
-                        }
-
-                        invocationNameInput.disabled = true;
-
-                        event.target.innerHTML = 'Edit'
-                        event.target.setAttribute('action-type', 'edit')
-
-                        ApiClient.ajax({
-                            type: 'PATCH',
-                            url: ApiClient.getUrl('alexaskill/api/user-skills/' + dataId),
-                            data: JSON.stringify({
-                                "invocationName": invocationNameInput.value
-                            }),
-                            contentType: 'application/json'
-                        }).then(function () {
-                            Dashboard.alert("Successfully changed invocation name");
-                        }, function (res) {
-                            Dashboard.alert("Could not update user skill");
-                            res.json().then(function (data) {
-                                Dashboard.alert(data.error);
-                            });
-                        });
-                    }
-                }));
-
-                document.querySelectorAll('.btnDeleteUserSkill').forEach(i => i.addEventListener('click', e => {
-                    const dataId = e.target.getAttribute('data-id');
 
                     ApiClient.ajax({
-                        type: 'DELETE',
-                        url: ApiClient.getUrl('alexaskill/api/user-skills/' + dataId)
+                        type: "DELETE",
+                        url: ApiClient.getUrl("alexaskill/api/user-skills/" + userId)
                     }).then(function () {
-                        reload();
+                        // get parent row
+                        const row = e.target.closest("tr");
+                        document.querySelector("#userTableBody").deleteRow(row.rowIndex - 1);
+                        Dashboard.hideLoadingMsg();
                     }, function (res) {
+                        Dashboard.hideLoadingMsg();
+
                         Dashboard.alert("Could not delete user skill");
                         res.json().then(function (data) {
-                            Dashboard.alert(data.error);
+                            Dashboard.alert("Reason:"  + data.error);
                         });
                     });
-                }));
+                });
+                tdDetailTableBodyCell.appendChild(deleteButton);
 
-                document.querySelectorAll('.btnAuthorizeUserSkill').forEach(i => i.addEventListener('click', e => {
-                    const dataId = e.target.getAttribute('data-id');
+                let authorizeButton = document.createElement("button");
+                if (user.UserSkill && user.UserSkill.UserSkillStatus === "LwaAuthPending" && config.ServerAddress != "" && config.LwaClientId != "" && config.LwaClientSecret != "") {
+                    authorizeButton.style.display = "block";
+                } else {
+                    authorizeButton.style.display = "none";
+                }
+                authorizeButton.setAttribute("data-id", user.Id);
+                authorizeButton.type = "button";
+                authorizeButton.is = "emby-button";
+                authorizeButton.setAttribute("action-type", "edit");
+                authorizeButton.classList.add("raised");
+                authorizeButton.classList.add("raised-mini");
+                authorizeButton.classList.add("emby-button");
+                authorizeButton.setAttribute("data-mini", "true");
+                authorizeButton.title = "Authorize";
+                authorizeButton.innerHTML = "Authorize";
+                authorizeButton.addEventListener("click", e => {
+                    Dashboard.showLoadingMsg();
+
+                    const row = e.target.closest("tr");
+                    const userId = row.getAttribute("data-id");
 
                     ApiClient.ajax({
-                        type: 'PUT',
-                        url: ApiClient.getUrl('alexaskill/api/user-skills/' + dataId + "/authorization")
+                        type: "PUT",
+                        url: ApiClient.getUrl("alexaskill/api/user-skills/" + userId + "/authorization")
                     }).then(function (res) {
+                        Dashboard.hideLoadingMsg();
+
                         res.json().then(function (data) {
-                            alert("Please ask the corresponding user to go to the following URL and follow the instructions there to complete LWA:\n" + ApiClient.getUrl(data.verificationUrl));
+                            alert("Please ask the corresponding user in whose Alexa Developer account the skill should be created to go to the following URL and follow the instructions there to complete LWA:\n" + ApiClient.getUrl(data.verificationUrl));
                         });
                     }, function (res) {
+                        Dashboard.hideLoadingMsg();
+
                         Dashboard.alert("Could not authorize user skill");
                         res.json().then(function (data) {
-                            Dashboard.alert(data.error);
+                            Dashboard.alert("Reason:"  + data.error);
                         });
                     });
-                }));
+                });
+                tdDetailTableBodyCell.appendChild(authorizeButton);
+
+                tr.appendChild(tdDetailTableBodyCell);
+
+                return tr;
             }
-            
-            document.querySelector('#ConfigForm').addEventListener('submit', function(e) {
+
+            document.querySelector("#saveConfigButton").addEventListener("click", function(e) {
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(Config.pluginUniqueId).then(function (config) {
-                    config.ServerAddress = document.querySelector('#ServerAddress').value;
-                    config.SslCertType = document.querySelector('#SslCertType').value;
-                    config.LwaClientId = document.querySelector('#LwaClientId').value;
-                    config.LwaClientSecret = document.querySelector('#LwaClientSecret').value;
+                    Dashboard.showLoadingMsg();
+
+                    config.ServerAddress = document.querySelector("#ServerAddress").value;
+                    config.SslCertType = document.querySelector("#SslCertType").value;
+                    config.LwaClientId = document.querySelector("#LwaClientId").value;
+                    config.LwaClientSecret = document.querySelector("#LwaClientSecret").value;
                     
+                    for (let row of document.querySelector("#userTableBody").rows) {
+                        const userId = row.getAttribute("data-id");
+
+                        if (userId === "undefined") {
+                            // create a new user skill
+                            let user = {
+                                "Username": row.cells[0].innerText,
+                                "InvocationName": row.cells[2].firstChild.value,
+                            };
+
+                            ApiClient.ajax({
+                                type: "POST",
+                                url: ApiClient.getUrl("alexaskill/api/user-skills"),
+                                data: JSON.stringify(user),
+                                contentType: "application/json"
+                            }).then(function (res) {
+                                res.json().then(function (user) {
+                                    row.setAttribute("data-id", user.Id);
+                                    for (let cell of row.cells) {
+                                        cell.setAttribute("data-id", user.Id);
+                                    }
+
+                                    row.cells[1].innerHTML = user.UserSkill.SkillId;
+                                    row.cells[2].firstChild.value = user.UserSkill.InvocationName;
+                                    row.cells[3].innerHTML = user.UserSkill.UserSkillStatus;
+                                    console.log(row.cells[4]);
+                                    if (user.UserSkill.UserSkillStatus === "LwaAuthPending" && config.ServerAddress != "" && config.LwaClientId != "" && config.LwaClientSecret != "") {
+                                        row.cells[4].children[1].style.display = "block";
+                                    } else {
+                                        row.cells[4].children[1].style.display = "none";
+                                    }
+                                });
+                            }, function (res) {
+                                Dashboard.alert("Could not create a new user skill");
+                                res.json().then(function (data) {
+                                    Dashboard.alert("Reason:"  + data.error);
+                                });                        
+                            });
+                        } else {
+                            // update current user skill config
+                            let data = {
+                                "InvocationName": row.cells[2].firstChild.value
+                            };
+
+                            ApiClient.ajax({
+                                type: "PATCH",
+                                url: ApiClient.getUrl("alexaskill/api/user-skills/" + userId),
+                                data: JSON.stringify(data),
+                                contentType: "application/json"
+                            }).then(function (res) {
+                                res.json().then(function (user) {
+                                    row.setAttribute("data-id", user.Id);
+
+                                    for (let cell of row.cells) {
+                                        cell.setAttribute("data-id", user.Id);
+                                    }
+
+                                    row.cells[1].innerHTML = user.UserSkill.SkillId;
+                                    row.cells[2].firstChild.value = user.UserSkill.InvocationName;
+                                    row.cells[3].innerHTML = user.UserSkill.UserSkillStatus;
+
+                                    if (user.UserSkill.UserSkillStatus === "LwaAuthPending" && config.ServerAddress != "" && config.LwaClientId != "" && config.LwaClientSecret != "") {
+                                        row.cells[4].children[1].style.display = "block";
+                                    } else {
+                                        row.cells[4].children[1].style.display = "none";
+                                    }
+                                });
+                            }, function (res) {
+                                Dashboard.alert("Could not update user skill");
+                                res.json().then(function (data) {
+                                    Dashboard.alert("Reason:"  + data.error);
+                                });                        
+                            });
+                        }                        
+                    }
+
                     ApiClient.updatePluginConfiguration(Config.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
+
+                    Dashboard.hideLoadingMsg();
                 });
 
                 e.preventDefault();
@@ -238,41 +337,20 @@
                 return false;
             });
 
-            document.querySelector('#newUserSkillButton').addEventListener('click', function(e) {
+            document.querySelector("#newUserSkillButton").addEventListener("click", function(e) {
                 let username = prompt("Please enter the username for which a new skill should be created");
 
                 if (username != null) {
-                    ApiClient.ajax({
-                        type: 'POST',
-                        url: ApiClient.getUrl('alexaskill/api/user-skills'),
-                        data: JSON.stringify({
-                            "username": username
-                        }),
-                        contentType: 'application/json'
-                    }).then(function () {
-                        reload();
-                    }, function (res) {
-                        Dashboard.alert("Could not create a new user skill");
-                        res.json().then(function (data) {
-                            Dashboard.alert(data.error);
-                        });                        
+                    ApiClient.getPluginConfiguration(Config.pluginUniqueId).then(function (config) {
+                        let newUserRow = createUserRow({
+                            "Username": username,
+                            "InvocationName": "jellyfin player",
+                            "SkillStatus": "unsaved"
+                        }, config);
+
+                        document.querySelector("#userTableBody").appendChild(newUserRow);
                     });
                 }
-            });
-            
-            document.querySelector('#deleteSkillDatabaseButton').addEventListener('click', function(e)
-            {
-                Dashboard.alert('Deleting skill database');
-
-                console.log('Deleting skill database');
-                ApiClient.ajax({
-                    type: 'DELETE',
-                    url: ApiClient.getUrl('alexaskill/api/database')
-                }).then(function () {
-                    Dashboard.alert('Deleted skill database');
-                }, function (res) {
-                    Dashboard.alert('Failed to delete skill database');
-                });
             });
         </script>
     </div>

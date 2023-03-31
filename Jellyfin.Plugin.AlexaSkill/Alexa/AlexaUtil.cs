@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using Jellyfin.Plugin.AlexaSkill.Entities;
 using Jellyfin.Plugin.AlexaSkill.Lwa;
 
@@ -22,29 +23,31 @@ public static class AlexaUtil
         {
             return func();
         }
-        catch (Exception ex) when (ex is UnauthorizedAccessException)
+        catch (Exception ex) when (ex is Refit.ApiException)
         {
-            if (user.SmapiDeviceToken == null)
-            {
-                throw;
+            if (((Refit.ApiException) ex).StatusCode == HttpStatusCode.Unauthorized) {
+                if (user.SmapiDeviceToken == null)
+                {
+                    throw ex;
+                }
+
+                // Refresh the token and try again
+                DeviceToken? token = LwaClient.RefreshDeviceToken(user.SmapiDeviceToken, Plugin.Instance!.Configuration.LwaClientId).Result;
+                if (token == null)
+                {
+                    throw new UnauthorizedAccessException("Failed to refresh token");
+                }
+
+                user.SmapiDeviceToken = token;
+
+                Plugin.Instance.SaveConfiguration();
+
+                return func();
             }
-
-            // Refresh the token and try again
-            DeviceToken? token = LwaClient.RefreshDeviceToken(user.SmapiDeviceToken, Plugin.Instance!.Configuration.LwaClientId).Result;
-            if (token == null)
+            else
             {
-                throw new UnauthorizedAccessException("Failed to refresh token");
+                throw ex;
             }
-
-            user.SmapiDeviceToken = token;
-
-            Plugin.Instance.DbRepo.UpdateUser(user);
-
-            return func();
-        }
-        catch (Exception ex)
-        {
-            throw ex;
         }
     }
 }

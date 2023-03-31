@@ -3,7 +3,7 @@ using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
-using Jellyfin.Plugin.AlexaSkill.Data;
+using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Session;
@@ -24,16 +24,16 @@ public class UnmarkFavoriteIntentHandler : BaseHandler
     /// Initializes a new instance of the <see cref="UnmarkFavoriteIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Instance of the <see cref="ISessionManager"/> interface.</param>
-    /// <param name="dbRepo">Instance of the <see cref="DbRepo"/> interface.</param>
+    /// <param name="config">The plugin configuration.</param>
     /// <param name="userDataRepository">Instance of the <see cref="IUserDataRepository"/> interface.</param>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="loggerFactory">Instance of the <see cref="ILoggerFactory"/> interface.</param>
     public UnmarkFavoriteIntentHandler(
         ISessionManager sessionManager,
-        DbRepo dbRepo,
+        PluginConfiguration config,
         IUserDataRepository userDataRepository,
         IUserManager userManager,
-        ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+        ILoggerFactory loggerFactory) : base(sessionManager, config, loggerFactory)
     {
         _userDataRepository = userDataRepository;
         _userManager = userManager;

@@ -114,7 +114,6 @@ Take a look at the [project plan](https://github.com/infinityofspace/jellyfin-al
 
 |                Module                |                                         License                                          |                                                    Project                                                     |
 | :----------------------------------: | :--------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------: |
-|                LiteDB                |        [License](https://raw.githubusercontent.com/mbdavid/LiteDB/master/LICENSE)        |                                  [Project](https://github.com/mbdavid/litedb)                                  |
 |              Alexa.NET               | [License](https://raw.githubusercontent.com/timheuer/alexa-skills-dotnet/master/LICENSE) |                           [Project](https://github.com/timheuer/alexa-skills-dotnet)                           |
 |         Alexa.NET.Management         | [License](https://raw.githubusercontent.com/stoiveyp/Alexa.NET.Management/main/LICENSE)  |                          [Project](https://github.com/stoiveyp/Alexa.NET.Management)                           |
 |          Amazon.Lambda.Core          |    [License](https://raw.githubusercontent.com/aws/aws-lambda-dotnet/master/LICENSE)     |        [Project](https://github.com/aws/aws-lambda-dotnet/tree/master/Libraries/src/Amazon.Lambda.Core)        |

@@ -3,7 +3,7 @@ using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
-using Jellyfin.Plugin.AlexaSkill.Data;
+using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
 
@@ -18,9 +18,9 @@ public class PlayIntentHandler : BaseHandler
     /// Initializes a new instance of the <see cref="PlayIntentHandler"/> class.
     /// </summary>
     /// <param name="sessionManager">Session manager instance.</param>
-    /// <param name="dbRepo">The database repository instance.</param>
+    /// <param name="config">The plugin configuration.</param>
     /// <param name="loggerFactory">Logger factory instance.</param>
-    public PlayIntentHandler(ISessionManager sessionManager, DbRepo dbRepo, ILoggerFactory loggerFactory) : base(sessionManager, dbRepo, loggerFactory)
+    public PlayIntentHandler(ISessionManager sessionManager, PluginConfiguration config, ILoggerFactory loggerFactory) : base(sessionManager, config, loggerFactory)
     {
     }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Alexa.NET.Management;
 using Jellyfin.Plugin.AlexaSkill.Alexa.Manifest;
 using Jellyfin.Plugin.AlexaSkill.Entities;
@@ -22,12 +21,14 @@ public class PluginConfiguration : BasePluginConfiguration
     public PluginConfiguration()
     {
         // set default options here
-        sslCertType = SslCertificateType.Trusted;
+        sslCertType = SslCertificateType.Wildcard;
         LwaClientId = string.Empty;
         LwaClientSecret = string.Empty;
 
         serverAddress = string.Empty;
         AccountLinkingClientId = Guid.NewGuid().ToString();
+
+        Users = new List<User>();
     }
 
     /// <summary>
@@ -88,30 +89,61 @@ public class PluginConfiguration : BasePluginConfiguration
     public string AccountLinkingClientId { get; set; }
 
     /// <summary>
-    /// Gets array if skills.
+    /// Gets or sets the list of users.
     /// </summary>
-    public Collection<ConfigUserSkill> Skills
-    {
-        get
-        {
-            Collection<ConfigUserSkill> skills = new Collection<ConfigUserSkill>();
-            IEnumerable<User> users = Plugin.Instance!.DbRepo.GetAllUser();
-            foreach (User u in users)
-            {
-                if (u.UserSkill != null)
-                {
-                    skills.Add(new ConfigUserSkill
-                    {
-                        SkillId = u.UserSkill.SkillId ?? "NA",
-                        SkillStatus = u.UserSkill.UserSkillStatus,
-                        InvocationName = u.UserSkill.InvocationName,
-                        Username = Plugin.Instance!.UserManager.GetUserById(u.Id).Username,
-                        UserId = u.Id.ToString()
-                    });
-                }
-            }
+    public List<User> Users { get; set; }
 
-            return skills;
+    /// <summary>
+    /// Add a user to the list of users.
+    /// </summary>
+    /// <param name="user">The user to add.</param>
+    public void AddUser(User user)
+    {
+        // check if the user is already inside the list
+        foreach (User u in Users)
+        {
+            if (user.Id == u.Id)
+            {
+                throw new ArgumentException("User already inside list");
+            }
         }
+
+        Users.Add(user);
+    }
+
+    /// <summary>
+    /// Get the user by its guid.
+    /// </summary>
+    /// <param name="guid">The guid of the user.</param>
+    /// <returns>Instance of the <see cref="User"/> class or null if the user was not found.</returns>
+    public User? GetUserById(Guid guid)
+    {
+        foreach (User u in Users)
+        {
+            if (guid == u.Id)
+            {
+                return u;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Delete the user with the given guid.
+    /// </summary>
+    /// <param name="guid">The guid of the user.</param>
+    /// <returns>True if the user was deleted, false otherwise.</returns>
+    public bool DeleteUser(Guid guid)
+    {
+        foreach (User u in Users)
+        {
+            if (guid == u.Id)
+            {
+                return Users.Remove(u);
+            }
+        }
+
+        return false;
     }
 }

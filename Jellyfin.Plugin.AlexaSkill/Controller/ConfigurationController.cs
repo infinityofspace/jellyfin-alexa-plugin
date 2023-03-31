@@ -58,11 +58,11 @@ public class ConfigurationController : ControllerBase
     public ActionResult UpdateUserSkill([FromRoute] string userId, [FromBody] dynamic json)
     {
         Dictionary<string, string> req = JsonConvert.DeserializeObject<Dictionary<string, string>>(json.ToString());
-        if (req.TryGetValue("invocationName", out var invocationName)
+        if (req.TryGetValue("InvocationName", out var invocationName)
             && invocationName.Length > 0
             && invocationName.Split(" ").Length >= 2)
         {
-            Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.DbRepo.GetUser(new Guid(userId));
+            Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.Configuration.GetUserById(new Guid(userId));
             if (pluginUser == null)
             {
                 return new JsonResult(new { error = "Could not find user" }, StatusCode(404));
@@ -74,9 +74,9 @@ public class ConfigurationController : ControllerBase
             }
 
             pluginUser.UserSkill.InvocationName = invocationName;
-            Plugin.Instance!.DbRepo.UpdateUser(pluginUser);
+            Plugin.Instance!.SaveConfiguration();
 
-            return new OkResult();
+            return new JsonResult(pluginUser);
         }
         else
         {
@@ -94,36 +94,53 @@ public class ConfigurationController : ControllerBase
     public ActionResult CreateNewUserSkill([FromBody] dynamic json)
     {
         Dictionary<string, string> req = JsonConvert.DeserializeObject<Dictionary<string, string>>(json.ToString());
-        if (req.TryGetValue("username", out var username) && username.Length > 0)
+        if (!req.TryGetValue("Username", out var username))
         {
-            Jellyfin.Data.Entities.User user = _userManager.GetUserByName(username);
-            if (user == null)
-            {
-                return new JsonResult(new { error = "Could not find user" }) { StatusCode = 404 };
-            }
-
-            UserSkill userSkill = new UserSkill
-            {
-                InvocationName = Config.InvocationName,
-                UserSkillStatus = UserSkillStatus.LwaAuthPending
-            };
-
-            Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser =
-                Plugin.Instance!.DbRepo.CreateUser(user.Id, string.Empty, userSkill);
-            if (pluginUser == null)
-            {
-                return new JsonResult(new { error = "Could not create user with skill" })
-                {
-                    StatusCode = 500
-                };
-            }
-
-            return new OkResult();
+            return new JsonResult(new { error = "Missing username parameter" }) { StatusCode = 400 };
         }
-        else
+        else if (username.Length == 0)
         {
             return new JsonResult(new { error = "Invalid username" }) { StatusCode = 400 };
         }
+        else if (!req.TryGetValue("InvocationName", out var invocationName))
+        {
+            return new JsonResult(new { error = "Missing invocation name parameter" }) { StatusCode = 400 };
+        }
+        else if (invocationName.Length == 0 || invocationName.Split(" ").Length < 2)
+        {
+            return new JsonResult(new { error = "Invalid invocation name" }) { StatusCode = 400 };
+        }
+
+        Jellyfin.Data.Entities.User jellyfinUser = _userManager.GetUserByName(username);
+        if (jellyfinUser == null)
+        {
+            return new JsonResult(new { error = "Could not find jellyfin user" }) { StatusCode = 404 };
+        }
+
+        UserSkill userSkill = new UserSkill
+        {
+            InvocationName = Config.InvocationName,
+            UserSkillStatus = UserSkillStatus.LwaAuthPending
+        };
+
+        User user = new User
+        {
+            Id = jellyfinUser.Id,
+            UserSkill = userSkill
+        };
+
+        try
+        {
+            Plugin.Instance!.Configuration.AddUser(user);
+        }
+        catch (ArgumentException)
+        {
+            return new JsonResult(new { error = "User skill already exists" }) { StatusCode = 400 };
+        }
+
+        Plugin.Instance!.SaveConfiguration();
+
+        return new JsonResult(user);
     }
 
     /// <summary>
@@ -135,13 +152,16 @@ public class ConfigurationController : ControllerBase
     [Authorize(Policy = "RequiresElevation")]
     public ActionResult DeleteUserSkill([FromRoute] string userId)
     {
-        Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.DbRepo.GetUser(new Guid(userId));
+        Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.Configuration.GetUserById(new Guid(userId));
         if (pluginUser == null)
         {
             return new JsonResult(new { error = "Could not find user" }, StatusCode(404));
         }
 
-        Plugin.Instance!.DbRepo.DeleteUser(pluginUser.Id);
+        Plugin.Instance!.Configuration.DeleteUser(pluginUser.Id);
+        Plugin.Instance!.SaveConfiguration();
+
+        // TODO: Delete skill in the cloud when there are no other users with the same skill
 
         return new OkResult();
     }
@@ -156,7 +176,7 @@ public class ConfigurationController : ControllerBase
     public ActionResult GetUserSkillAuthorisation([FromRoute] string userId)
     {
         Guid userIdGuid = new Guid(userId);
-        Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.DbRepo.GetUser(userIdGuid);
+        Jellyfin.Plugin.AlexaSkill.Entities.User? pluginUser = Plugin.Instance!.Configuration.GetUserById(userIdGuid);
         if (pluginUser == null)
         {
             return new JsonResult(new { error = "Could not find user" }) { StatusCode = 404 };
@@ -176,18 +196,5 @@ public class ConfigurationController : ControllerBase
         {
             StatusCode = 200
         };
-    }
-
-    /// <summary>
-    /// Delete database.
-    /// </summary>
-    /// <returns>A <see cref="ActionResult"/>.</returns>
-    [HttpDelete("database")]
-    [Authorize(Policy = "RequiresElevation")]
-    public ActionResult DeleteDatabase()
-    {
-        Plugin.Instance!.DbRepo.DeleteDatabase();
-
-        return new OkResult();
     }
 }

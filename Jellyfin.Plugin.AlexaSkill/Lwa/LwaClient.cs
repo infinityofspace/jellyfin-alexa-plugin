@@ -156,7 +156,7 @@ public static class LwaClient
             && json.TryGetValue("expires_in", out var expiresInStr)
             && int.TryParse(expiresInStr, out int expiresIn))
             {
-                return new DeviceToken(token, refreshToken, tokenType, expiresIn);
+                return new DeviceToken(token, refreshToken, tokenType, new DateTimeOffset(DateTime.UtcNow).AddSeconds(expiresIn).ToUnixTimeSeconds());
             }
             else
             {
