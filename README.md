@@ -9,7 +9,7 @@ Alexa skill plugin for Jellyfin
 ---
 
 _Note: This project is still in a very early alpha phase, this means not all features are fully functional at this time and features or usage can change significantly between releases.
-Moreover, new releases can result in data loss of the skill database.
+Moreover, new releases can result in data loss of the plugin configuration.
 Changes on the main branch are not final and may brake your setup, please use the tagged versions for more stable beta versions eg. `0.x`.
 Please always create a backup of your setup beforehand._
 
@@ -20,7 +20,7 @@ _Note: If you are looking for a more stable and feature-packed Alexa Skill for J
  2. [Features](#features)
  3. [Requirements](#requirements)
  4. [Installation](#installation)
- 5. [Database](#database)
+ 5. [Configuration file](#configuration-file)
  6. [Supported languages](#supported-languages)
  7. [Skill speech examples](#skill-speech-examples)
  8. [Project plan](#project-plan)
@@ -47,6 +47,7 @@ This is a Jellyfin plugin for an Alexa skill to play media from your Jellyfin se
 - other:
     - multi-language support (see [Supported languages](#supported-languages))
     - multi-user support (any user on the Jellyfin server can use the skill)
+    - multi-alexa-user support, allow different Amazon Alexa accounts use the skill
 
 Note: currently only audio is a supported media type
 
@@ -87,13 +88,13 @@ Before you continue, make sure you meet the following requirements:
       4. Create a folder named `Jellyfin.Plugin.AlexaSkill` inside the `plugins` folder of your Jellyfin server data folder.
       5. Copy everything from the folder `Jellyfin.Plugin.AlexaSkill/bin/Release/net6.0/publish/` to the previously created folder `Jellyfin.Plugin.AlexaSkill` in your Jellyfin server `plugin` directory. 
 2. Restart your Jellyfin server.
-3. Go to the plugin settings page and fill out the required values, then click `Save` and `Rebuild Skill` (the first build may take some time). You can find [here](https://github.com/infinityofspace/jellyfin-alexa-plugin/wiki/Configuration) more details on how to fill out the required values.
+3. Go to the plugin settings page and configure the plugin. You can find [here](https://github.com/infinityofspace/jellyfin-alexa-plugin/wiki/Configuration) more details on how to fill out the required values and configure the plugin.
 4. Now go into your Alexa app and link your desired Jellyfin account.
 5. You are now ready to use the skill. Let's start the skill with "Alexa, start Jellyfin Player" (assuming the invocation name has not been customized).
 
-## Database
+## Configuration file
 
-The skill saves data in an own database, which is located at the `data` folder in your root Jellyfin data folder and named `alexa-skill-plugin.db`.
+The skill saves data in the plugin config xml file, which is located at `plugins/configurations` path in your root Jellyfin folder and named `Jellyfin.Plugin.AlexaSkill.xml`.
 
 ## Supported languages
 
