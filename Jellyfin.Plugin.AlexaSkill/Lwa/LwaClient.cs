@@ -131,15 +131,17 @@ public static class LwaClient
     /// </summary>
     /// <param name="deviceToken">Device token.</param>
     /// <param name="clientId">LWA client id.</param>
+    /// <param name="clientSecret">LWA client secret.</param>
     /// <returns>Devive token.</returns>
-    public static async Task<DeviceToken?> RefreshDeviceToken(DeviceToken deviceToken, string clientId)
+    public static async Task<DeviceToken?> RefreshDeviceToken(DeviceToken deviceToken, string clientId, string clientSecret)
     {
         string url = "https://api.amazon.com/auth/o2/token";
         var formUrlEncodedContent = new FormUrlEncodedContent(new Dictionary<string, string>()
         {
             { "grant_type", "refresh_token" },
             { "refresh_token", deviceToken.RefreshToken },
-            { "client_id", clientId }
+            { "client_id", clientId },
+            { "client_secret", clientSecret }
         });
 
         HttpResponseMessage response = await Plugin.HttpClient.PostAsync(url, formUrlEncodedContent).ConfigureAwait(false);

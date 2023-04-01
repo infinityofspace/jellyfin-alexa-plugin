@@ -23,16 +23,19 @@ public static class AlexaUtil
         {
             return func();
         }
-        catch (Exception ex) when (ex is Refit.ApiException)
+        catch (Exception ex) when (ex.InnerException is Refit.ApiException)
         {
-            if (((Refit.ApiException) ex).StatusCode == HttpStatusCode.Unauthorized) {
+            if (((Refit.ApiException) ex.InnerException).StatusCode == HttpStatusCode.Unauthorized) {
                 if (user.SmapiDeviceToken == null)
                 {
                     throw ex;
                 }
 
                 // Refresh the token and try again
-                DeviceToken? token = LwaClient.RefreshDeviceToken(user.SmapiDeviceToken, Plugin.Instance!.Configuration.LwaClientId).Result;
+                DeviceToken? token = LwaClient.RefreshDeviceToken(
+                    user.SmapiDeviceToken,
+                    Plugin.Instance!.Configuration.LwaClientId,
+                    Plugin.Instance!.Configuration.LwaClientSecret).Result;
                 if (token == null)
                 {
                     throw new UnauthorizedAccessException("Failed to refresh token");
