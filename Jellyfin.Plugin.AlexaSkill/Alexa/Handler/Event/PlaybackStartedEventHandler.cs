@@ -58,11 +58,7 @@ public class PlaybackStartedEventHandler : BaseHandler
     /// <returns>Empty response.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        AudioPlayerRequest? req = request as AudioPlayerRequest;
-        if (req == null)
-        {
-            return ResponseBuilder.Tell("Invalid request type.");
-        }
+        AudioPlayerRequest req = (AudioPlayerRequest)request;
 
         BaseItem item = _libraryManager.GetItemById(new Guid(req.Token));
 

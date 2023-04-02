@@ -50,11 +50,7 @@ public class PlaybackStoppedEventHandler : BaseHandler
     /// <inheritdoc/>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        AudioPlayerRequest? req = request as AudioPlayerRequest;
-        if (req == null)
-        {
-            return ResponseBuilder.Tell("Invalid request type.");
-        }
+        AudioPlayerRequest req = (AudioPlayerRequest)request;
 
         PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo
         {

@@ -44,17 +44,13 @@ public class PlaybackFailedEventHandler : BaseHandler
     public override bool CanHandle(Request request)
     {
         AudioPlayerRequest? audioPlayerRequest = request as AudioPlayerRequest;
-        return audioPlayerRequest != null && audioPlayerRequest.AudioRequestType == AudioRequestType.PlaybackStopped;
+        return audioPlayerRequest != null && audioPlayerRequest.AudioRequestType == AudioRequestType.PlaybackFailed;
     }
 
     /// <inheritdoc/>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        AudioPlayerRequest? req = request as AudioPlayerRequest;
-        if (req == null)
-        {
-            return ResponseBuilder.Tell("Invalid request type.");
-        }
+        AudioPlayerRequest req = (AudioPlayerRequest)request;
 
         PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo
         {

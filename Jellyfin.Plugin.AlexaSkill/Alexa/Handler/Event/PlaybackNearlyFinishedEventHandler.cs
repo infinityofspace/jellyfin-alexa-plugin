@@ -58,11 +58,7 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
     /// <returns>Next item in the queue or end of playback queue.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
-        AudioPlayerRequest? req = request as AudioPlayerRequest;
-        if (req == null)
-        {
-            return ResponseBuilder.Tell("Invalid request type.");
-        }
+        AudioPlayerRequest req = (AudioPlayerRequest)request;
 
         Guid? next_item_id = null;
         for (int i = 0; i < session.NowPlayingQueue.Count; i++)
