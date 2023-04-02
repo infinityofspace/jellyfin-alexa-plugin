@@ -68,8 +68,8 @@ public class PlaybackStartedEventHandler : BaseHandler
 
         PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
         {
-            SessionId=session.Id,
-            ItemId=item.Id
+            SessionId = session.Id,
+            ItemId = item.Id
         };
         SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 

@@ -87,7 +87,8 @@ public class PlayPlaylistIntentHandler : BaseHandler
         BaseItem playlist = playlists.Items[0];
 
         // Get the playlist items
-        IReadOnlyList<BaseItem> playlistItems = ((Folder) playlist).GetItemList(new InternalItemsQuery() {
+        IReadOnlyList<BaseItem> playlistItems = ((Folder)playlist).GetItemList(new InternalItemsQuery()
+        {
             User = jellyfinUser,
             Recursive = true,
             MediaTypes = new[] { MediaType.Audio },

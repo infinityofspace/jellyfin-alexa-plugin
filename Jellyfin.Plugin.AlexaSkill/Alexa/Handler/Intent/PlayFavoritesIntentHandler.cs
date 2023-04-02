@@ -84,7 +84,7 @@ public class PlayFavoritesIntentHandler : BaseHandler
         }
 
         session.NowPlayingQueue = queueItems;
-        
+
         BaseItem firstItem = _libraryManager.GetItemById(queueItems[0].Id);
         session.FullNowPlayingItem = firstItem;
 

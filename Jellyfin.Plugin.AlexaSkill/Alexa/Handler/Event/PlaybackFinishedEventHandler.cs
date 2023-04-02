@@ -56,9 +56,10 @@ public class PlaybackFinishedEventHandler : BaseHandler
             return ResponseBuilder.Tell("Invalid request type.");
         }
 
-        PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo {
-            SessionId=session.Id,
-            ItemId=new Guid(req.Token)
+        PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo
+        {
+            SessionId = session.Id,
+            ItemId = new Guid(req.Token)
         };
         SessionManager.OnPlaybackStopped(playbackStopInfo).ConfigureAwait(false);
 
