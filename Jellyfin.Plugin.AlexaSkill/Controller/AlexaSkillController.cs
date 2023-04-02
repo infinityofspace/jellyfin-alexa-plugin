@@ -75,7 +75,8 @@ public class AlexaSkillController : ControllerBase
             new PlaybackStoppedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new SessionEndedRequestHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
 
-            new ExceptionHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory)
+            new ExceptionHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory),
+            new FallbackIntentHandler(sessionManager, Plugin.Instance!.Configuration, loggerFactory)
         };
     }
 
