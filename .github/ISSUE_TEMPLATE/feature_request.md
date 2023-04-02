@@ -15,6 +15,6 @@ assignees: ''
 
 ### Optional: Describe your idea for a solution
 
-[comment]: <> (A short and precise description of how to solve the above problem..)
+[comment]: <> (A short and precise description of how to solve the above problem.)
 
 (Write your answer here.)
