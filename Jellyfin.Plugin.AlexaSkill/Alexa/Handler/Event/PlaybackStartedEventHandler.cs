@@ -7,6 +7,7 @@ using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
@@ -65,7 +66,12 @@ public class PlaybackStartedEventHandler : BaseHandler
 
         BaseItem item = _libraryManager.GetItemById(new Guid(req.Token));
 
-        session.FullNowPlayingItem = item;
+        PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
+        {
+            SessionId=session.Id,
+            ItemId=item.Id
+        };
+        SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 
         return ResponseBuilder.Empty();
     }

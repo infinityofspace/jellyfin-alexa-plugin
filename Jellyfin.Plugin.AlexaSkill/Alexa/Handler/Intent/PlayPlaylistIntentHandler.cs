@@ -9,7 +9,6 @@ using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Playlists;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
@@ -88,7 +87,12 @@ public class PlayPlaylistIntentHandler : BaseHandler
         BaseItem playlist = playlists.Items[0];
 
         // Get the playlist items
-        List<BaseItem> playlistItems = Playlist.GetPlaylistItems(MediaType.Audio, new[] { playlist }, _userManager.GetUserById(user.Id), new DtoOptions(true));
+        IReadOnlyList<BaseItem> playlistItems = ((Folder) playlist).GetItemList(new InternalItemsQuery() {
+            User = jellyfinUser,
+            Recursive = true,
+            MediaTypes = new[] { MediaType.Audio },
+            DtoOptions = new DtoOptions(true),
+        });
 
         if (playlistItems.Count == 0)
         {
@@ -108,10 +112,10 @@ public class PlayPlaylistIntentHandler : BaseHandler
 
         session.NowPlayingQueue = queueItems;
 
-        BaseItem prevItem = _libraryManager.GetItemById(queueItems[0].Id);
-        session.FullNowPlayingItem = prevItem;
+        BaseItem firstItem = _libraryManager.GetItemById(queueItems[0].Id);
+        session.FullNowPlayingItem = firstItem;
 
-        string item_id = prevItem.Id.ToString();
+        string item_id = firstItem.Id.ToString();
 
         return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
     }

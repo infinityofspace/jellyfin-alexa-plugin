@@ -58,10 +58,16 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
     /// <returns>Next item in the queue or end of playback queue.</returns>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
+        AudioPlayerRequest? req = request as AudioPlayerRequest;
+        if (req == null)
+        {
+            return ResponseBuilder.Tell("Invalid request type.");
+        }
+
         Guid? next_item_id = null;
         for (int i = 0; i < session.NowPlayingQueue.Count; i++)
         {
-            if (session.NowPlayingQueue[i].Id == session.NowPlayingItem?.Id)
+            if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem?.Id)
             {
                 if (i + 1 < session.NowPlayingQueue.Count)
                 {
@@ -82,6 +88,6 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
         string item_id = item.Id.ToString();
         string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, audioUrl, item_id);
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, audioUrl, item_id, req.Token, 0);
     }
 }

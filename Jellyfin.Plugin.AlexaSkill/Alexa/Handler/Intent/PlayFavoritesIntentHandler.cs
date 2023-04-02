@@ -84,11 +84,11 @@ public class PlayFavoritesIntentHandler : BaseHandler
         }
 
         session.NowPlayingQueue = queueItems;
+        
+        BaseItem firstItem = _libraryManager.GetItemById(queueItems[0].Id);
+        session.FullNowPlayingItem = firstItem;
 
-        BaseItem prevItem = _libraryManager.GetItemById(queueItems[0].Id);
-        session.FullNowPlayingItem = prevItem;
-
-        string item_id = prevItem.Id.ToString();
+        string item_id = firstItem.Id.ToString();
 
         return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
     }

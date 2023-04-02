@@ -59,18 +59,19 @@ public class NextIntentHandler : BaseHandler
             return ResponseBuilder.Empty();
         }
 
-        // get the next item in the queue
-        for (int i = 0; i > session.NowPlayingQueue.Count - 1; i++)
+        // get the next item in the queue, skip last item
+        for (int i = 0; i < session.NowPlayingQueue.Count - 1; i++)
         {
-            if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem.Id)
+            if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem?.Id)
             {
                 System.Guid nextItemId = session.NowPlayingQueue[i + 1].Id;
                 string item_id = session.NowPlayingQueue[i + 1].Id.ToString();
                 BaseItem nextItem = _libraryManager.GetItemById(nextItemId);
 
+                string previousToken = session.FullNowPlayingItem.Id.ToString();
                 session.FullNowPlayingItem = nextItem;
 
-                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id);
+                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
             }
         }
 

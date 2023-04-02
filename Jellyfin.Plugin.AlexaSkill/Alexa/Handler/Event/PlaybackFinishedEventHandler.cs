@@ -1,3 +1,4 @@
+using System;
 using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
@@ -5,6 +6,7 @@ using Alexa.NET.Response;
 using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
@@ -48,6 +50,18 @@ public class PlaybackFinishedEventHandler : BaseHandler
     /// <inheritdoc/>
     public override SkillResponse Handle(Request request, Context context, Entities.User user, SessionInfo session)
     {
+        AudioPlayerRequest? req = request as AudioPlayerRequest;
+        if (req == null)
+        {
+            return ResponseBuilder.Tell("Invalid request type.");
+        }
+
+        PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo {
+            SessionId=session.Id,
+            ItemId=new Guid(req.Token)
+        };
+        SessionManager.OnPlaybackStopped(playbackStopInfo).ConfigureAwait(false);
+
         return ResponseBuilder.Empty();
     }
 }

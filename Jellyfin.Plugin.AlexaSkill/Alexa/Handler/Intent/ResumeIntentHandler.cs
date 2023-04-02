@@ -57,6 +57,8 @@ public class ResumeIntentHandler : BaseHandler
 
         string item_id = session.FullNowPlayingItem.Id.ToString();
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id);
+        int offset = session.PlayState == null ? 0 : (int) (session.PlayState.PositionTicks * 10000);        
+
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id, offset);
     }
 }
