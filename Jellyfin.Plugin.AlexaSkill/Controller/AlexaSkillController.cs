@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Alexa.NET;
 using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
@@ -67,6 +68,7 @@ public class AlexaSkillController : ControllerBase
             new PlayLastAddedIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlayArtistSongsIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
 
             new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
@@ -263,10 +265,9 @@ public class AlexaSkillController : ControllerBase
             if (h.CanHandle(req.Request))
             {
                 SkillResponse skillResponse = h.HandleRequest(req.Request, req.Context);
+
                 ContentResult res = new ContentResult();
-
                 res.Content = JsonConvert.SerializeObject(skillResponse);
-
                 return res;
             }
         }
@@ -274,6 +275,10 @@ public class AlexaSkillController : ControllerBase
         if (req.Request is IntentRequest)
         {
             _logger.LogWarning("Unhandled skill intent request: {0}", ((IntentRequest)req.Request).Intent.Name);
+
+            ContentResult res = new ContentResult();
+            res.Content = JsonConvert.SerializeObject(ResponseBuilder.Tell("This intent is not implemented yet."));
+            return res;
         }
         else
         {
