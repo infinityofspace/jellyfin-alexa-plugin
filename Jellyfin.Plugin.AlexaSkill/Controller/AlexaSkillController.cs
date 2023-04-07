@@ -69,6 +69,7 @@ public class AlexaSkillController : ControllerBase
             new PlayPlaylistIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlayFavoritesIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlayArtistSongsIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
+            new PlayAlbumIntentHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
 
             new PlaybackFailedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
             new PlaybackFinishedEventHandler(sessionManager, Plugin.Instance!.Configuration, libraryManager, userManager, loggerFactory),
