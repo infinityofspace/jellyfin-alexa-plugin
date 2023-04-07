@@ -78,7 +78,7 @@ public class PlayArtistSongsIntentHandler : BaseHandler
             return ResponseBuilder.Tell(FormattableString.Invariant($"Sorry, I couldn't find any artists with the name {musician}."));
         }
 
-        // Get the all songs with the artists
+        // Get all songs with the artists
         IReadOnlyList<BaseItem> artistsItems = _libraryManager.GetItemList(new InternalItemsQuery()
         {
             User = jellyfinUser,
