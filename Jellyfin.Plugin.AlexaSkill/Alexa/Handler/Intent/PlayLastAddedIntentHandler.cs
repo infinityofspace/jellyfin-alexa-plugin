@@ -84,13 +84,15 @@ public class PlayLastAddedIntentHandler : BaseHandler
             });
         }
 
-        session.NowPlayingQueue = queueItems;
+        PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
+        {
+            SessionId = session.Id,
+            IsPaused = true,
+            NowPlayingQueue = queueItems.ToArray(),
+        };
+        SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 
-        BaseItem prevItem = _libraryManager.GetItemById(latestItems[0].Id);
-        session.FullNowPlayingItem = prevItem;
-
-        string item_id = prevItem.Id.ToString();
-
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
+        string itemId = latestItems[0].Id.ToString();
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(itemId, user), itemId);
     }
 }

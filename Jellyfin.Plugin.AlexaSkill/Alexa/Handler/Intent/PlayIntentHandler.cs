@@ -46,14 +46,14 @@ public class PlayIntentHandler : BaseHandler
         // check if something is currently playing which we can resume
         if (session.FullNowPlayingItem != null)
         {
-            string item_id = session.FullNowPlayingItem.Id.ToString();
-            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id);
+            string itemId = session.FullNowPlayingItem.Id.ToString();
+            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(itemId, user), itemId);
         }
         else if (session.NowPlayingQueue.Count > 0)
         {
             // resume the first item in the queue
-            string item_id = session.NowPlayingQueue[0].Id.ToString();
-            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id);
+            string itemId = session.NowPlayingQueue[0].Id.ToString();
+            return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(itemId, user), itemId);
         }
 
         return ResponseBuilder.Empty();

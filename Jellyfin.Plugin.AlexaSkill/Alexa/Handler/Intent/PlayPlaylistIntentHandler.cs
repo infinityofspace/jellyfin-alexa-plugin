@@ -111,13 +111,15 @@ public class PlayPlaylistIntentHandler : BaseHandler
             });
         }
 
-        session.NowPlayingQueue = queueItems;
+        PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
+        {
+            SessionId = session.Id,
+            IsPaused = true,
+            NowPlayingQueue = queueItems.ToArray(),
+        };
+        SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 
-        BaseItem firstItem = _libraryManager.GetItemById(queueItems[0].Id);
-        session.FullNowPlayingItem = firstItem;
-
-        string item_id = firstItem.Id.ToString();
-
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
+        string itemId = queueItems[0].Id.ToString();
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(itemId, user), itemId);
     }
 }

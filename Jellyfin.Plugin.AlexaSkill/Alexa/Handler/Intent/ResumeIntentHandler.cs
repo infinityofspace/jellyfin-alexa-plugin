@@ -55,10 +55,10 @@ public class ResumeIntentHandler : BaseHandler
             return ResponseBuilder.Tell("There is no media currently playing.");
         }
 
-        string item_id = session.FullNowPlayingItem.Id.ToString();
+        string itemId = session.FullNowPlayingItem.Id.ToString();
 
-        int offset = session.PlayState == null ? 0 : (int)(session.PlayState.PositionTicks * 10000);
+        int offset = session.PlayState == null || session.PlayState.PositionTicks == null ? 0 : (int)(session.PlayState.PositionTicks / 10000);
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id, offset);
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(itemId, user), itemId, offset);
     }
 }

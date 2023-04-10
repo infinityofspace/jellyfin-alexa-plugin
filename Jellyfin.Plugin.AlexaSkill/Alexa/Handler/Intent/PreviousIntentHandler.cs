@@ -65,13 +65,11 @@ public class PreviousIntentHandler : BaseHandler
             if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem.Id)
             {
                 System.Guid prevItemId = session.NowPlayingQueue[i - 1].Id;
-                string item_id = session.NowPlayingQueue[i - 1].Id.ToString();
+                string itemId = session.NowPlayingQueue[i - 1].Id.ToString();
                 BaseItem prevItem = _libraryManager.GetItemById(prevItemId);
 
                 string previousItemId = session.NowPlayingQueue[i - 1].Id.ToString();
-                session.FullNowPlayingItem = prevItem;
-
-                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
+                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(itemId, user), itemId);
             }
         }
 

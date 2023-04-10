@@ -65,7 +65,8 @@ public class PlaybackStartedEventHandler : BaseHandler
         PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
         {
             SessionId = session.Id,
-            ItemId = item.Id
+            ItemId = item.Id,
+            PositionTicks = req.OffsetInMilliseconds * 10000
         };
         SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 

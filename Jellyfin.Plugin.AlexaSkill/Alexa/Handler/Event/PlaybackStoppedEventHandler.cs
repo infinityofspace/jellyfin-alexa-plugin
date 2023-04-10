@@ -52,13 +52,14 @@ public class PlaybackStoppedEventHandler : BaseHandler
     {
         AudioPlayerRequest req = (AudioPlayerRequest)request;
 
-        PlaybackStopInfo playbackStopInfo = new PlaybackStopInfo
+        PlaybackProgressInfo playbackProgressInfo = new PlaybackProgressInfo
         {
             SessionId = session.Id,
             ItemId = new Guid(req.Token),
-            PositionTicks = req.OffsetInMilliseconds / 10000
+            IsPaused = true,
+            PositionTicks = req.OffsetInMilliseconds * 10000
         };
-        SessionManager.OnPlaybackStopped(playbackStopInfo).ConfigureAwait(false);
+        SessionManager.OnPlaybackProgress(playbackProgressInfo).ConfigureAwait(false);
 
         return ResponseBuilder.Empty();
     }

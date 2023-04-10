@@ -4,7 +4,6 @@ using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
 using Jellyfin.Plugin.AlexaSkill.Configuration;
-using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
@@ -65,13 +64,11 @@ public class NextIntentHandler : BaseHandler
             if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem?.Id)
             {
                 System.Guid nextItemId = session.NowPlayingQueue[i + 1].Id;
-                string item_id = session.NowPlayingQueue[i + 1].Id.ToString();
-                BaseItem nextItem = _libraryManager.GetItemById(nextItemId);
+                string itemId = session.NowPlayingQueue[i + 1].Id.ToString();
 
                 string previousToken = session.FullNowPlayingItem.Id.ToString();
-                session.FullNowPlayingItem = nextItem;
 
-                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
+                return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(itemId, user), itemId);
             }
         }
 

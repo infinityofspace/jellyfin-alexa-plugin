@@ -5,7 +5,6 @@ using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Alexa.NET.Response.Directive;
 using Jellyfin.Plugin.AlexaSkill.Configuration;
-using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Logging;
@@ -60,29 +59,26 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
     {
         AudioPlayerRequest req = (AudioPlayerRequest)request;
 
-        Guid? next_item_id = null;
+        Guid? nextItemId = null;
         for (int i = 0; i < session.NowPlayingQueue.Count; i++)
         {
             if (session.NowPlayingQueue[i].Id == session.FullNowPlayingItem?.Id)
             {
                 if (i + 1 < session.NowPlayingQueue.Count)
                 {
-                    next_item_id = session.NowPlayingQueue[i + 1].Id;
+                    nextItemId = session.NowPlayingQueue[i + 1].Id;
                 }
 
                 break;
             }
         }
 
-        if (next_item_id == null)
+        if (nextItemId == null)
         {
             return ResponseBuilder.AudioPlayerStop();
         }
 
-        BaseItem item = _libraryManager.GetItemById((Guid)next_item_id);
-
-        string item_id = item.Id.ToString();
-
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id, req.Token, 0);
+        string itemId = nextItemId.ToString();
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(itemId, user), itemId, req.Token, 0);
     }
 }

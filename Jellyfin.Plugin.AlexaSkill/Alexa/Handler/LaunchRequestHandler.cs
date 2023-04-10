@@ -7,6 +7,7 @@ using Jellyfin.Plugin.AlexaSkill.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.AlexaSkill.Alexa.Handler;
@@ -59,7 +60,7 @@ public class LaunchRequestHandler : BaseHandler
         }
 
         // check if something is currently playing which we can resume
-        if (session.FullNowPlayingItem != null)
+        if (session.NowPlayingItem != null)
         {
             string item_id = session.FullNowPlayingItem.Id.ToString();
 
@@ -69,8 +70,15 @@ public class LaunchRequestHandler : BaseHandler
         {
             // resume the first item in the queue
             BaseItem item = _libraryManager.GetItemById(session.NowPlayingQueue[0].Id);
-            string item_id = item.Id.ToString();
-            session.FullNowPlayingItem = item;
+            string item_id = session.NowPlayingQueue[0].Id.ToString();
+
+            PlaybackStartInfo playbackStartInfo = new PlaybackStartInfo
+            {
+                SessionId = session.Id,
+                IsPaused = true,
+                ItemId = session.NowPlayingQueue[0].Id
+            };
+            SessionManager.OnPlaybackStart(playbackStartInfo).ConfigureAwait(false);
 
             return ResponseBuilder.AudioPlayerPlay(PlayBehavior.ReplaceAll, GetStreamUrl(item_id, user), item_id);
         }
