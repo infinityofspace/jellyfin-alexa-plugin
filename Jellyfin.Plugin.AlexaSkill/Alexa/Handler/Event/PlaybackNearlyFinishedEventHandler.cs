@@ -82,8 +82,7 @@ public class PlaybackNearlyFinishedEventHandler : BaseHandler
         BaseItem item = _libraryManager.GetItemById((Guid)next_item_id);
 
         string item_id = item.Id.ToString();
-        string audioUrl = new Uri(new Uri(Plugin.Instance!.Configuration.ServerAddress), "/Audio/" + item_id + "/universal").ToString();
 
-        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, audioUrl, item_id, req.Token, 0);
+        return ResponseBuilder.AudioPlayerPlay(PlayBehavior.Enqueue, GetStreamUrl(item_id, user), item_id, req.Token, 0);
     }
 }
