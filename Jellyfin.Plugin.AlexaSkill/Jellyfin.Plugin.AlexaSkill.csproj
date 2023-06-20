@@ -28,7 +28,7 @@
   <ItemGroup>
     <PackageReference Include="Alexa.NET" Version="1.22.0" />
     <PackageReference Include="Amazon.Lambda.Core" Version="2.1.0 " />
-    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="2.1.0" />
+    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="2.1.1" />
     <PackageReference Include="Alexa.NET.Management" Version="5.10.0" />
   </ItemGroup>
 
